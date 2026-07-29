@@ -1,4 +1,5 @@
 using CraftingPOS.Domain.Common;
+using CraftingPOS.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CraftingPOS.Persistence;
@@ -9,15 +10,15 @@ public class AppDbContext : DbContext
     {
     }
 
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<User> Users => Set<User>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Apply all IEntityTypeConfiguration<> classes automatically
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        // Global query filter: soft-delete convention.
-        // Applied automatically to every entity that inherits BaseEntity.
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
@@ -63,7 +64,6 @@ public class AppDbContext : DbContext
                     entry.Entity.UpdatedAt = DateTime.UtcNow;
                     break;
                 case EntityState.Deleted:
-                    // Enforce soft delete: never physically remove rows.
                     entry.State = EntityState.Modified;
                     entry.Entity.IsActive = false;
                     entry.Entity.UpdatedAt = DateTime.UtcNow;

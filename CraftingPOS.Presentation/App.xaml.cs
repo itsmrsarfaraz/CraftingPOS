@@ -1,7 +1,12 @@
 ﻿using System.IO;
 using System.Windows;
+using CraftingPOS.Application;
+using CraftingPOS.Application.Interfaces;
+using CraftingPOS.Infrastructure;
 using CraftingPOS.Infrastructure.Logging;
 using CraftingPOS.Persistence;
+using CraftingPOS.Persistence.Seed;
+using CraftingPOS.Presentation.Views;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +21,6 @@ public partial class App : Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
-        // Data + log directory: C:\ProgramData\CraftingPOS\
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "CraftingPOS");
@@ -43,23 +47,27 @@ public partial class App : Application
             .ConfigureServices((context, services) =>
             {
                 services.AddPersistence(context.Configuration);
-                // Future sprints will add:
-                // services.AddApplicationServices();
-                // services.AddInfrastructureServices();
-                // services.AddViewModelsAndViews();
+                services.AddApplicationServices();
+                services.AddInfrastructureServices();
+                services.AddPresentationServices();
             })
             .Build();
 
         await AppHost.StartAsync();
 
-        // Ensure database + tables exist on first run
         using (var scope = AppHost.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await db.Database.MigrateAsync();
+
+            var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+            await DataSeeder.SeedAsync(db, passwordHasher.Hash);
         }
 
-        Log.Information("CraftingPOS startup complete.");
+        Log.Information("CraftingPOS startup complete. Showing login screen.");
+
+        var loginView = AppHost.Services.GetRequiredService<LoginView>();
+        loginView.Show();
 
         base.OnStartup(e);
     }
