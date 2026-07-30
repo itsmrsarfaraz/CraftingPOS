@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CraftingPOS.Application.Common;
 using CraftingPOS.Application.DTOs;
 using CraftingPOS.Application.Interfaces;
 using CraftingPOS.Domain.Enums;
@@ -13,10 +14,12 @@ public partial class ProductsViewModel : ObservableObject
 {
     private readonly IProductService _productService;
     private readonly ICategoryService _categoryService;
-    private readonly Application.Common.CurrentUserContext _currentUserContext;
+    private readonly IProductVariantService _productVariantService;
+    private readonly CurrentUserContext _currentUserContext;
 
     public ObservableCollection<ProductDto> Products { get; } = new();
     public ObservableCollection<CategoryDto> Categories { get; } = new();
+    public ObservableCollection<ProductVariantDto> Variants { get; } = new();
     public List<ProductType> ProductTypes { get; } = Enum.GetValues<ProductType>().ToList();
 
     [ObservableProperty]
@@ -25,7 +28,7 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty]
     private string searchTerm = string.Empty;
 
-    // Form fields
+    // ---- Product form fields ----
     [ObservableProperty] private int formId;
     [ObservableProperty] private CategoryDto? formCategory;
     [ObservableProperty] private string formBarcode = string.Empty;
@@ -44,15 +47,40 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private string statusMessage = string.Empty;
     [ObservableProperty] private bool hasError;
 
+    // ---- Variant form fields ----
+    [ObservableProperty] private ProductVariantDto? selectedVariant;
+    [ObservableProperty] private int variantFormId;
+    [ObservableProperty] private string variantName = string.Empty;
+    [ObservableProperty] private string variantBarcode = string.Empty;
+    [ObservableProperty] private string variantSku = string.Empty;
+    [ObservableProperty] private decimal variantCostPrice;
+    [ObservableProperty] private decimal variantSellingPrice;
+    [ObservableProperty] private decimal variantCurrentStock;
+    [ObservableProperty] private decimal variantMinimumStock;
+    [ObservableProperty] private string variantFormHeader = "New Variant";
+    [ObservableProperty] private string variantStatusMessage = string.Empty;
+    [ObservableProperty] private bool variantHasError;
+
     public bool IsOwner => _currentUserContext.Session?.RoleName == RoleNames.Owner;
+
+    /// <summary>True whenever the current form's Product Type is Variable, regardless of save state.</summary>
+    public bool IsVariableProductType => FormProductType == ProductType.Variable;
+
+    /// <summary>Show the variants grid/form only once the parent product has been saved (FormId > 0).</summary>
+    public bool ShowVariantsPanel => FormProductType == ProductType.Variable && FormId > 0;
+
+    /// <summary>Prompt to save the product first, shown only for new (unsaved) Variable products.</summary>
+    public bool ShowVariantsSaveFirstMessage => FormProductType == ProductType.Variable && FormId == 0;
 
     public ProductsViewModel(
         IProductService productService,
         ICategoryService categoryService,
-        Application.Common.CurrentUserContext currentUserContext)
+        IProductVariantService productVariantService,
+        CurrentUserContext currentUserContext)
     {
         _productService = productService;
         _categoryService = categoryService;
+        _productVariantService = productVariantService;
         _currentUserContext = currentUserContext;
     }
 
@@ -105,20 +133,43 @@ public partial class ProductsViewModel : ObservableObject
             return;
         }
 
-        FormId = value.Id;
         FormCategory = Categories.FirstOrDefault(c => c.Id == value.CategoryId);
         FormBarcode = value.Barcode;
         FormSku = value.SKU;
         FormName = value.Name;
         FormDescription = value.Description ?? string.Empty;
-        FormProductType = value.ProductType;
+        FormProductType = value.ProductType; // set BEFORE FormId so the variants panel resolves correctly
         FormCostPrice = value.CostPrice;
         FormSellingPrice = value.SellingPrice;
         FormCurrentStock = value.CurrentStock;
         FormMinimumStock = value.MinimumStock;
-        FormImageSourcePath = null; // only set when user picks a NEW image
+        FormImageSourcePath = null;
+        FormId = value.Id; // triggers variant auto-load if this is a Variable product
         FormHeader = $"Edit Product — {value.Name}";
         ClearStatus();
+        NewVariant();
+    }
+
+    partial void OnFormProductTypeChanged(ProductType value)
+    {
+        OnPropertyChanged(nameof(IsVariableProductType));
+        OnPropertyChanged(nameof(ShowVariantsPanel));
+        OnPropertyChanged(nameof(ShowVariantsSaveFirstMessage));
+    }
+
+    partial void OnFormIdChanged(int value)
+    {
+        OnPropertyChanged(nameof(ShowVariantsPanel));
+        OnPropertyChanged(nameof(ShowVariantsSaveFirstMessage));
+
+        if (value > 0 && FormProductType == ProductType.Variable)
+        {
+            _ = LoadVariantsAsync(value);
+        }
+        else
+        {
+            Variants.Clear();
+        }
     }
 
     [RelayCommand]
@@ -139,6 +190,7 @@ public partial class ProductsViewModel : ObservableObject
         FormImageSourcePath = null;
         FormHeader = "New Product";
         ClearStatus();
+        NewVariant();
     }
 
     [RelayCommand]
@@ -195,9 +247,21 @@ public partial class ProductsViewModel : ObservableObject
                 return;
             }
 
-            SetStatus(FormId == 0 ? "Product created successfully." : "Product updated successfully.", false);
+            var wasNew = FormId == 0;
+            SetStatus(wasNew ? "Product created successfully." : "Product updated successfully.", false);
+
             await LoadAsync();
-            NewProduct();
+
+            if (FormProductType == ProductType.Variable)
+            {
+                // Keep the form open with the saved Id so variants can be added right away.
+                FormId = result.Data;
+                FormHeader = $"Edit Product — {FormName} (Variable)";
+            }
+            else
+            {
+                NewProduct();
+            }
         }
         finally
         {
@@ -231,6 +295,134 @@ public partial class ProductsViewModel : ObservableObject
         }
     }
 
+    // ---- Variant management ----
+
+    private async Task LoadVariantsAsync(int productId)
+    {
+        try
+        {
+            var variants = await _productVariantService.GetByProductIdAsync(productId);
+            Variants.Clear();
+            foreach (var v in variants) Variants.Add(v);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to load variants for product {ProductId}.", productId);
+        }
+    }
+
+    partial void OnSelectedVariantChanged(ProductVariantDto? value)
+    {
+        if (value == null)
+        {
+            NewVariantForm();
+            return;
+        }
+
+        VariantFormId = value.Id;
+        VariantName = value.VariantName;
+        VariantBarcode = value.Barcode;
+        VariantSku = value.SKU;
+        VariantCostPrice = value.CostPrice;
+        VariantSellingPrice = value.SellingPrice;
+        VariantCurrentStock = value.CurrentStock;
+        VariantMinimumStock = value.MinimumStock;
+        VariantFormHeader = $"Edit Variant — {value.VariantName}";
+        ClearVariantStatus();
+    }
+
+    [RelayCommand]
+    private void NewVariant()
+    {
+        SelectedVariant = null;
+        NewVariantForm();
+    }
+
+    private void NewVariantForm()
+    {
+        VariantFormId = 0;
+        VariantName = string.Empty;
+        VariantBarcode = string.Empty;
+        VariantSku = string.Empty;
+        VariantCostPrice = 0;
+        VariantSellingPrice = 0;
+        VariantCurrentStock = 0;
+        VariantMinimumStock = 0;
+        VariantFormHeader = "New Variant";
+        ClearVariantStatus();
+    }
+
+    [RelayCommand]
+    private async Task SaveVariantAsync()
+    {
+        ClearVariantStatus();
+
+        if (FormId <= 0)
+        {
+            SetVariantStatus("Save the product first before adding variants.", true);
+            return;
+        }
+
+        var dto = new SaveProductVariantDto
+        {
+            Id = VariantFormId,
+            ProductId = FormId,
+            VariantName = VariantName,
+            Barcode = VariantBarcode,
+            SKU = VariantSku,
+            CostPrice = VariantCostPrice,
+            SellingPrice = VariantSellingPrice,
+            CurrentStock = VariantCurrentStock,
+            MinimumStock = VariantMinimumStock
+        };
+
+        IsBusy = true;
+        try
+        {
+            var result = await _productVariantService.SaveAsync(dto);
+
+            if (!result.Success)
+            {
+                SetVariantStatus(result.ErrorMessage ?? "Failed to save variant.", true);
+                return;
+            }
+
+            SetVariantStatus(VariantFormId == 0 ? "Variant added." : "Variant updated.", false);
+            await LoadVariantsAsync(FormId);
+            NewVariant();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeactivateVariantAsync(ProductVariantDto? variant)
+    {
+        if (variant == null) return;
+
+        IsBusy = true;
+        try
+        {
+            var result = await _productVariantService.DeactivateAsync(variant.Id);
+
+            if (!result.Success)
+            {
+                SetVariantStatus(result.ErrorMessage ?? "Failed to remove variant.", true);
+                return;
+            }
+
+            SetVariantStatus($"Variant '{variant.VariantName}' removed.", false);
+            await LoadVariantsAsync(FormId);
+            NewVariant();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private void SetStatus(string message, bool isError)
     {
         StatusMessage = message;
@@ -241,5 +433,17 @@ public partial class ProductsViewModel : ObservableObject
     {
         StatusMessage = string.Empty;
         HasError = false;
+    }
+
+    private void SetVariantStatus(string message, bool isError)
+    {
+        VariantStatusMessage = message;
+        VariantHasError = isError;
+    }
+
+    private void ClearVariantStatus()
+    {
+        VariantStatusMessage = string.Empty;
+        VariantHasError = false;
     }
 }

@@ -46,40 +46,40 @@ public class ProductService : IProductService
         return await _productRepository.CountAsync();
     }
 
-    public async Task<OperationResult> SaveAsync(SaveProductDto dto)
+    public async Task<OperationResult<int>> SaveAsync(SaveProductDto dto)
     {
-        // --- Basic validation ---
         if (string.IsNullOrWhiteSpace(dto.Name))
-            return OperationResult.Fail("Product name is required.");
+            return OperationResult<int>.Fail("Product name is required.");
 
         if (dto.CategoryId <= 0)
-            return OperationResult.Fail("Please select a category.");
+            return OperationResult<int>.Fail("Please select a category.");
 
         if (string.IsNullOrWhiteSpace(dto.Barcode))
-            return OperationResult.Fail("Barcode is required.");
+            return OperationResult<int>.Fail("Barcode is required.");
 
         if (string.IsNullOrWhiteSpace(dto.SKU))
-            return OperationResult.Fail("SKU is required.");
+            return OperationResult<int>.Fail("SKU is required.");
 
         // BR-PROD-003: Selling Price cannot be less than Cost Price (Owner override allowed)
         var isOwner = _currentUserContext.Session?.RoleName == RoleNames.Owner;
         if (dto.SellingPrice < dto.CostPrice && !(dto.AllowPriceOverride && isOwner))
         {
-            return OperationResult.Fail(
+            return OperationResult<int>.Fail(
                 "Selling price cannot be less than cost price. An Owner may override this.");
         }
 
-        // BR-PROD-001: Barcode must be unique
         var excludeId = dto.Id > 0 ? dto.Id : (int?)null;
+
+        // BR-PROD-001: Barcode must be unique
         if (await _productRepository.BarcodeExistsAsync(dto.Barcode.Trim(), excludeId))
         {
-            return OperationResult.Fail($"Barcode '{dto.Barcode}' is already assigned to another product.");
+            return OperationResult<int>.Fail($"Barcode '{dto.Barcode}' is already assigned to another product.");
         }
 
         // BR-PROD-002: SKU must be unique
         if (await _productRepository.SkuExistsAsync(dto.SKU.Trim(), excludeId))
         {
-            return OperationResult.Fail($"SKU '{dto.SKU}' is already assigned to another product.");
+            return OperationResult<int>.Fail($"SKU '{dto.SKU}' is already assigned to another product.");
         }
 
         var currentUsername = _currentUserContext.Session?.Username ?? "system";
@@ -92,7 +92,6 @@ public class ProductService : IProductService
 
         if (dto.Id == 0)
         {
-            // FR-PROD-001: create
             var product = new Product
             {
                 CategoryId = dto.CategoryId,
@@ -114,13 +113,14 @@ public class ProductService : IProductService
 
             Log.Information("Product '{Name}' (Barcode: {Barcode}) created by '{User}'.",
                 product.Name, product.Barcode, currentUsername);
+
+            return OperationResult<int>.Ok(product.Id);
         }
         else
         {
-            // FR-PROD-002: edit
             var product = await _productRepository.GetByIdAsync(dto.Id);
             if (product == null)
-                return OperationResult.Fail("Product not found.");
+                return OperationResult<int>.Fail("Product not found.");
 
             product.CategoryId = dto.CategoryId;
             product.Barcode = dto.Barcode.Trim();
@@ -136,7 +136,6 @@ public class ProductService : IProductService
 
             if (imagePath != null)
             {
-                // Clean up the old image file before replacing the reference
                 if (!string.IsNullOrWhiteSpace(product.ImagePath))
                     _imageStorageService.DeleteProductImage(product.ImagePath);
 
@@ -148,9 +147,9 @@ public class ProductService : IProductService
 
             Log.Information("Product '{Name}' (Id: {Id}) updated by '{User}'.",
                 product.Name, product.Id, currentUsername);
-        }
 
-        return OperationResult.Ok();
+            return OperationResult<int>.Ok(product.Id);
+        }
     }
 
     public async Task<OperationResult> DeactivateAsync(int id)
@@ -159,11 +158,6 @@ public class ProductService : IProductService
         if (product == null)
             return OperationResult.Fail("Product not found.");
 
-        // FR-PROD-003: deactivate (soft delete)
-        // BR-BAR-002: barcode is never released for reuse — handled naturally
-        // since the barcode uniqueness check only considers active products... 
-        // NOTE: per BR-BAR-002 we deliberately do NOT exclude inactive rows here,
-        // so a deactivated product's barcode can never be reassigned.
         product.IsActive = false;
         product.UpdatedBy = _currentUserContext.Session?.Username ?? "system";
 
