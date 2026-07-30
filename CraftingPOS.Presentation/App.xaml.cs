@@ -12,10 +12,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using WpfApplication = System.Windows.Application;
 
 namespace CraftingPOS.Presentation;
 
-public partial class App : Application
+public partial class App : WpfApplication
 {
     public static IHost AppHost { get; private set; } = null!;
 

@@ -14,6 +14,9 @@ public static class DependencyInjection
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();
 
+        services.AddTransient<DashboardViewModel>();
+        services.AddTransient<DashboardView>();
+
         return services;
     }
 }

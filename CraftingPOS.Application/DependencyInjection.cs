@@ -11,6 +11,7 @@ public static class DependencyInjection
     {
         services.AddSingleton<CurrentUserContext>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         return services;
     }
