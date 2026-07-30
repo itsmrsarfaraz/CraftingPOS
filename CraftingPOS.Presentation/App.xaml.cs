@@ -16,13 +16,12 @@ using Serilog;
 
 namespace CraftingPOS.Presentation;
 
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     public static IHost AppHost { get; private set; } = null!;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
-        // Global exception handler: log crashes instead of failing silently.
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnAppDomainUnhandledException;
 
@@ -85,7 +84,7 @@ public partial class App : Application
             "CraftingPOS - Error",
             MessageBoxButton.OK,
             MessageBoxImage.Error);
-        e.Handled = true; // prevent silent crash; keep app running
+        e.Handled = true;
     }
 
     private void OnAppDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
