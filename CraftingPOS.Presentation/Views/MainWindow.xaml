@@ -55,7 +55,7 @@
 				<Button x:Name="InventoryButton" Content="Inventory" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
 				<Button x:Name="PurchasesButton" Content="Purchases" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
 				<Button x:Name="CustomersButton" Content="Customers" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button x:Name="SuppliersButton" Content="Suppliers" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="SuppliersButton" Content="Suppliers" Style="{StaticResource SidebarButtonStyle}" Click="SuppliersButton_Click"/>
 				<Button x:Name="ReportsButton" Content="Reports" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
 				<Button x:Name="SettingsButton" Content="Settings" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
 			</StackPanel>

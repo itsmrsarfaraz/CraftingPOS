@@ -7,10 +7,12 @@ namespace CraftingPOS.Application.Services;
 public class DashboardService : IDashboardService
 {
     private readonly IProductService _productService;
+    private readonly ISupplierService _supplierService;
 
-    public DashboardService(IProductService productService)
+    public DashboardService(IProductService productService, ISupplierService supplierService)
     {
         _productService = productService;
+        _supplierService = supplierService;
     }
 
     public async Task<DashboardSummaryDto> GetSummaryAsync()
@@ -25,14 +27,13 @@ public class DashboardService : IDashboardService
             // TODO (Sprint 10 - Sales): replace with real profit calculation for today
             summary.TodaysProfit = 0m;
 
-            // Sprint 4: real product count
             summary.TotalProducts = await _productService.CountAsync();
 
             // TODO (Sprint 7 - Customers): replace with real Customers.Count()
             summary.TotalCustomers = 0;
 
-            // TODO (Sprint 5 - Suppliers): replace with real Suppliers.Count()
-            summary.TotalSuppliers = 0;
+            // Sprint 5: real supplier count
+            summary.TotalSuppliers = await _supplierService.CountAsync();
 
             // TODO (Sprint 9 - Inventory): replace with real low stock query
             summary.LowStockItems = new List<LowStockItemDto>();

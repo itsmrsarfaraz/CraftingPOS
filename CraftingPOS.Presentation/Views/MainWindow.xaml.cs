@@ -15,10 +15,9 @@ public partial class MainWindow : Window
     }
 
     private void DashboardButton_Click(object sender, RoutedEventArgs e) => ShowDashboard();
-
     private void CategoriesButton_Click(object sender, RoutedEventArgs e) => ShowCategories();
-
     private void ProductsButton_Click(object sender, RoutedEventArgs e) => ShowProducts();
+    private void SuppliersButton_Click(object sender, RoutedEventArgs e) => ShowSuppliers();
 
     private void ShowDashboard()
     {
@@ -35,6 +34,12 @@ public partial class MainWindow : Window
     private void ShowProducts()
     {
         var view = App.AppHost.Services.GetRequiredService<ProductsView>();
+        MainContent.Content = view;
+    }
+
+    private void ShowSuppliers()
+    {
+        var view = App.AppHost.Services.GetRequiredService<SuppliersView>();
         MainContent.Content = view;
     }
 }
