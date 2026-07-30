@@ -48,16 +48,16 @@
 		<!-- Sidebar -->
 		<Border Grid.Row="1" Grid.Column="0" Background="#111827">
 			<StackPanel Margin="0,16,0,0">
-				<Button Content="Dashboard" Style="{StaticResource SidebarButtonStyle}"/>
-				<Button Content="Sales" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button Content="Products" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button Content="Categories" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button Content="Inventory" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button Content="Purchases" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button Content="Customers" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button Content="Suppliers" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button Content="Reports" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button Content="Settings" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="DashboardButton" Content="Dashboard" Style="{StaticResource SidebarButtonStyle}" Click="DashboardButton_Click"/>
+				<Button x:Name="SalesButton" Content="Sales" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="ProductsButton" Content="Products" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="CategoriesButton" Content="Categories" Style="{StaticResource SidebarButtonStyle}" Click="CategoriesButton_Click"/>
+				<Button x:Name="InventoryButton" Content="Inventory" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="PurchasesButton" Content="Purchases" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="CustomersButton" Content="Customers" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="SuppliersButton" Content="Suppliers" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="ReportsButton" Content="Reports" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="SettingsButton" Content="Settings" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
 			</StackPanel>
 		</Border>
 

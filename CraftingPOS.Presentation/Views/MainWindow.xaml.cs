@@ -11,10 +11,22 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = viewModel;
 
-        Loaded += (_, _) =>
-        {
-            var dashboardView = App.AppHost.Services.GetRequiredService<DashboardView>();
-            MainContent.Content = dashboardView;
-        };
+        Loaded += (_, _) => ShowDashboard();
+    }
+
+    private void DashboardButton_Click(object sender, RoutedEventArgs e) => ShowDashboard();
+
+    private void CategoriesButton_Click(object sender, RoutedEventArgs e) => ShowCategories();
+
+    private void ShowDashboard()
+    {
+        var view = App.AppHost.Services.GetRequiredService<DashboardView>();
+        MainContent.Content = view;
+    }
+
+    private void ShowCategories()
+    {
+        var view = App.AppHost.Services.GetRequiredService<CategoriesView>();
+        MainContent.Content = view;
     }
 }

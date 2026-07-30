@@ -17,6 +17,9 @@ public static class DependencyInjection
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<DashboardView>();
 
+        services.AddTransient<CategoriesViewModel>();
+        services.AddTransient<CategoriesView>();
+
         return services;
     }
 }
