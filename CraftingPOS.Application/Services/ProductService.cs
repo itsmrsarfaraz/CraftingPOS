@@ -1,0 +1,202 @@
+using CraftingPOS.Application.Common;
+using CraftingPOS.Application.DTOs;
+using CraftingPOS.Application.Interfaces;
+using CraftingPOS.Domain.Entities;
+using CraftingPOS.Domain.Enums;
+using CraftingPOS.Domain.Interfaces;
+using Serilog;
+
+namespace CraftingPOS.Application.Services;
+
+public class ProductService : IProductService
+{
+    private readonly IProductRepository _productRepository;
+    private readonly IImageStorageService _imageStorageService;
+    private readonly CurrentUserContext _currentUserContext;
+
+    public ProductService(
+        IProductRepository productRepository,
+        IImageStorageService imageStorageService,
+        CurrentUserContext currentUserContext)
+    {
+        _productRepository = productRepository;
+        _imageStorageService = imageStorageService;
+        _currentUserContext = currentUserContext;
+    }
+
+    public async Task<List<ProductDto>> GetAllAsync()
+    {
+        var products = await _productRepository.GetAllAsync();
+        return products.OrderBy(p => p.Name).Select(MapToDto).ToList();
+    }
+
+    public async Task<List<ProductDto>> SearchAsync(string searchTerm)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return await GetAllAsync();
+        }
+
+        var products = await _productRepository.SearchAsync(searchTerm.Trim());
+        return products.OrderBy(p => p.Name).Select(MapToDto).ToList();
+    }
+
+    public async Task<int> CountAsync()
+    {
+        return await _productRepository.CountAsync();
+    }
+
+    public async Task<OperationResult> SaveAsync(SaveProductDto dto)
+    {
+        // --- Basic validation ---
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            return OperationResult.Fail("Product name is required.");
+
+        if (dto.CategoryId <= 0)
+            return OperationResult.Fail("Please select a category.");
+
+        if (string.IsNullOrWhiteSpace(dto.Barcode))
+            return OperationResult.Fail("Barcode is required.");
+
+        if (string.IsNullOrWhiteSpace(dto.SKU))
+            return OperationResult.Fail("SKU is required.");
+
+        // BR-PROD-003: Selling Price cannot be less than Cost Price (Owner override allowed)
+        var isOwner = _currentUserContext.Session?.RoleName == RoleNames.Owner;
+        if (dto.SellingPrice < dto.CostPrice && !(dto.AllowPriceOverride && isOwner))
+        {
+            return OperationResult.Fail(
+                "Selling price cannot be less than cost price. An Owner may override this.");
+        }
+
+        // BR-PROD-001: Barcode must be unique
+        var excludeId = dto.Id > 0 ? dto.Id : (int?)null;
+        if (await _productRepository.BarcodeExistsAsync(dto.Barcode.Trim(), excludeId))
+        {
+            return OperationResult.Fail($"Barcode '{dto.Barcode}' is already assigned to another product.");
+        }
+
+        // BR-PROD-002: SKU must be unique
+        if (await _productRepository.SkuExistsAsync(dto.SKU.Trim(), excludeId))
+        {
+            return OperationResult.Fail($"SKU '{dto.SKU}' is already assigned to another product.");
+        }
+
+        var currentUsername = _currentUserContext.Session?.Username ?? "system";
+
+        string? imagePath = null;
+        if (!string.IsNullOrWhiteSpace(dto.NewImageSourcePath))
+        {
+            imagePath = await _imageStorageService.SaveProductImageAsync(dto.NewImageSourcePath);
+        }
+
+        if (dto.Id == 0)
+        {
+            // FR-PROD-001: create
+            var product = new Product
+            {
+                CategoryId = dto.CategoryId,
+                Barcode = dto.Barcode.Trim(),
+                SKU = dto.SKU.Trim(),
+                Name = dto.Name.Trim(),
+                Description = dto.Description?.Trim(),
+                ProductType = dto.ProductType,
+                CostPrice = dto.CostPrice,
+                SellingPrice = dto.SellingPrice,
+                CurrentStock = dto.CurrentStock,
+                MinimumStock = dto.MinimumStock,
+                ImagePath = imagePath,
+                CreatedBy = currentUsername
+            };
+
+            await _productRepository.AddAsync(product);
+            await _productRepository.SaveChangesAsync();
+
+            Log.Information("Product '{Name}' (Barcode: {Barcode}) created by '{User}'.",
+                product.Name, product.Barcode, currentUsername);
+        }
+        else
+        {
+            // FR-PROD-002: edit
+            var product = await _productRepository.GetByIdAsync(dto.Id);
+            if (product == null)
+                return OperationResult.Fail("Product not found.");
+
+            product.CategoryId = dto.CategoryId;
+            product.Barcode = dto.Barcode.Trim();
+            product.SKU = dto.SKU.Trim();
+            product.Name = dto.Name.Trim();
+            product.Description = dto.Description?.Trim();
+            product.ProductType = dto.ProductType;
+            product.CostPrice = dto.CostPrice;
+            product.SellingPrice = dto.SellingPrice;
+            product.CurrentStock = dto.CurrentStock;
+            product.MinimumStock = dto.MinimumStock;
+            product.UpdatedBy = currentUsername;
+
+            if (imagePath != null)
+            {
+                // Clean up the old image file before replacing the reference
+                if (!string.IsNullOrWhiteSpace(product.ImagePath))
+                    _imageStorageService.DeleteProductImage(product.ImagePath);
+
+                product.ImagePath = imagePath;
+            }
+
+            await _productRepository.UpdateAsync(product);
+            await _productRepository.SaveChangesAsync();
+
+            Log.Information("Product '{Name}' (Id: {Id}) updated by '{User}'.",
+                product.Name, product.Id, currentUsername);
+        }
+
+        return OperationResult.Ok();
+    }
+
+    public async Task<OperationResult> DeactivateAsync(int id)
+    {
+        var product = await _productRepository.GetByIdAsync(id);
+        if (product == null)
+            return OperationResult.Fail("Product not found.");
+
+        // FR-PROD-003: deactivate (soft delete)
+        // BR-BAR-002: barcode is never released for reuse — handled naturally
+        // since the barcode uniqueness check only considers active products... 
+        // NOTE: per BR-BAR-002 we deliberately do NOT exclude inactive rows here,
+        // so a deactivated product's barcode can never be reassigned.
+        product.IsActive = false;
+        product.UpdatedBy = _currentUserContext.Session?.Username ?? "system";
+
+        await _productRepository.UpdateAsync(product);
+        await _productRepository.SaveChangesAsync();
+
+        Log.Information("Product '{Name}' (Id: {Id}) deactivated by '{User}'.",
+            product.Name, id, _currentUserContext.Session?.Username ?? "system");
+
+        return OperationResult.Ok();
+    }
+
+    private ProductDto MapToDto(Product p)
+    {
+        return new ProductDto
+        {
+            Id = p.Id,
+            CategoryId = p.CategoryId,
+            CategoryName = p.Category?.Name ?? string.Empty,
+            Barcode = p.Barcode,
+            SKU = p.SKU,
+            Name = p.Name,
+            Description = p.Description,
+            ProductType = p.ProductType,
+            CostPrice = p.CostPrice,
+            SellingPrice = p.SellingPrice,
+            CurrentStock = p.CurrentStock,
+            MinimumStock = p.MinimumStock,
+            ImagePath = p.ImagePath,
+            ImageFullPath = string.IsNullOrWhiteSpace(p.ImagePath)
+                ? null
+                : _imageStorageService.GetFullPath(p.ImagePath),
+            IsActive = p.IsActive
+        };
+    }
+}

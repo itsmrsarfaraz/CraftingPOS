@@ -18,6 +18,8 @@ public partial class MainWindow : Window
 
     private void CategoriesButton_Click(object sender, RoutedEventArgs e) => ShowCategories();
 
+    private void ProductsButton_Click(object sender, RoutedEventArgs e) => ShowProducts();
+
     private void ShowDashboard()
     {
         var view = App.AppHost.Services.GetRequiredService<DashboardView>();
@@ -27,6 +29,12 @@ public partial class MainWindow : Window
     private void ShowCategories()
     {
         var view = App.AppHost.Services.GetRequiredService<CategoriesView>();
+        MainContent.Content = view;
+    }
+
+    private void ShowProducts()
+    {
+        var view = App.AppHost.Services.GetRequiredService<ProductsView>();
         MainContent.Content = view;
     }
 }

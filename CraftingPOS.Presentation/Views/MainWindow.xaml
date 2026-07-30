@@ -50,7 +50,7 @@
 			<StackPanel Margin="0,16,0,0">
 				<Button x:Name="DashboardButton" Content="Dashboard" Style="{StaticResource SidebarButtonStyle}" Click="DashboardButton_Click"/>
 				<Button x:Name="SalesButton" Content="Sales" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
-				<Button x:Name="ProductsButton" Content="Products" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="ProductsButton" Content="Products" Style="{StaticResource SidebarButtonStyle}" Click="ProductsButton_Click"/>
 				<Button x:Name="CategoriesButton" Content="Categories" Style="{StaticResource SidebarButtonStyle}" Click="CategoriesButton_Click"/>
 				<Button x:Name="InventoryButton" Content="Inventory" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
 				<Button x:Name="PurchasesButton" Content="Purchases" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
