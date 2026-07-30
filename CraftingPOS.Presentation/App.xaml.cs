@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 using CraftingPOS.Application;
 using CraftingPOS.Application.Interfaces;
 using CraftingPOS.Infrastructure;
@@ -12,16 +13,19 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using WpfApplication = System.Windows.Application;
 
 namespace CraftingPOS.Presentation;
 
-public partial class App : WpfApplication
+public partial class App : Application
 {
     public static IHost AppHost { get; private set; } = null!;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        // Global exception handler: log crashes instead of failing silently.
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnAppDomainUnhandledException;
+
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "CraftingPOS");
@@ -71,6 +75,25 @@ public partial class App : WpfApplication
         loginView.Show();
 
         base.OnStartup(e);
+    }
+
+    private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        Log.Error(e.Exception, "Unhandled UI exception.");
+        MessageBox.Show(
+            $"An unexpected error occurred:\n\n{e.Exception.Message}\n\nSee the log file for details.",
+            "CraftingPOS - Error",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
+        e.Handled = true; // prevent silent crash; keep app running
+    }
+
+    private void OnAppDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception ex)
+        {
+            Log.Fatal(ex, "Unhandled non-UI exception. Application will terminate.");
+        }
     }
 
     protected override async void OnExit(ExitEventArgs e)
