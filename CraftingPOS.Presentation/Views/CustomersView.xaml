@@ -5,60 +5,60 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-    <UserControl.Resources>
-        <Style x:Key="PanelStyle" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="BorderBrush" Value="#E5E7EB"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="18"/>
-        </Style>
-        <Style x:Key="FieldLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="Gray"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
-        </Style>
-        <Style x:Key="FieldBox" TargetType="TextBox">
-            <Setter Property="Padding" Value="6"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
-        </Style>
-    </UserControl.Resources>
+	<UserControl.Resources>
+		<Style x:Key="PanelStyle" TargetType="Border">
+			<Setter Property="Background" Value="White"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#E5E7EB"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="Padding" Value="18"/>
+		</Style>
+		<Style x:Key="FieldLabel" TargetType="TextBlock">
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="Foreground" Value="Gray"/>
+			<Setter Property="Margin" Value="0,0,0,4"/>
+		</Style>
+		<Style x:Key="FieldBox" TargetType="TextBox">
+			<Setter Property="Padding" Value="6"/>
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="Margin" Value="0,0,0,10"/>
+		</Style>
+	</UserControl.Resources>
 
-    <Grid Background="#F3F4F6">
-        <Grid Margin="24">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="12"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="12"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="1*" MinWidth="340"/>
-            </Grid.ColumnDefinitions>
+	<Grid Background="#F3F4F6">
+		<Grid Margin="24">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="12"/>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="12"/>
+				<RowDefinition Height="*"/>
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="2*"/>
+				<ColumnDefinition Width="16"/>
+				<ColumnDefinition Width="1*" MinWidth="360"/>
+			</Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+			<TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
                        Text="Customer Management" FontSize="24" FontWeight="Bold" Foreground="#1E3A8A"/>
 
-            <!-- Search bar -->
-            <Grid Grid.Row="2" Grid.Column="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="100"/>
-                </Grid.ColumnDefinitions>
-                <TextBox Grid.Column="0" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
+			<!-- Search bar -->
+			<Grid Grid.Row="2" Grid.Column="0">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="100"/>
+				</Grid.ColumnDefinitions>
+				<TextBox Grid.Column="0" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
                          Padding="8" FontSize="13"/>
-                <Button Grid.Column="1" Content="Search" Margin="8,0,0,0"
+				<Button Grid.Column="1" Content="Search" Margin="8,0,0,0"
                         Background="#1E3A8A" Foreground="White"
                         Command="{Binding SearchCommand}"/>
-            </Grid>
+			</Grid>
 
-            <!-- Left: Customer Grid -->
-            <Border Grid.Row="4" Grid.Column="0" Style="{StaticResource PanelStyle}">
-                <DataGrid ItemsSource="{Binding Customers}"
+			<!-- Left: Customer Grid -->
+			<Border Grid.Row="4" Grid.Column="0" Style="{StaticResource PanelStyle}">
+				<DataGrid ItemsSource="{Binding Customers}"
                           SelectedItem="{Binding SelectedCustomer}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
@@ -67,119 +67,214 @@
                           HeadersVisibility="Column"
                           RowHeight="34"
                           CanUserAddRows="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
-                        <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="Auto"/>
-                        <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
-                        <DataGridTemplateColumn Header="" Width="190">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Content="Purchase History"
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+						<DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="Auto"/>
+						<DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
+						<DataGridTextColumn Header="Outstanding" Binding="{Binding OutstandingBalance, StringFormat='Rs. {0:N0}'}" Width="Auto">
+							<DataGridTextColumn.CellStyle>
+								<Style TargetType="DataGridCell">
+									<Setter Property="Foreground" Value="#B91C1C"/>
+									<Setter Property="FontWeight" Value="Bold"/>
+								</Style>
+							</DataGridTextColumn.CellStyle>
+						</DataGridTextColumn>
+						<DataGridTemplateColumn Header="" Width="260">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate>
+									<StackPanel Orientation="Horizontal">
+										<Button Content="Khata"
+                                                FontSize="11" Padding="6,2" Margin="0,0,6,0"
+                                                Background="#FEF3C7" Foreground="#92400E" BorderThickness="0"
+                                                Command="{Binding DataContext.ViewLedgerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+										<Button Content="Purchase History"
                                                 FontSize="11" Padding="6,2" Margin="0,0,6,0"
                                                 Background="#DBEAFE" Foreground="#1E3A8A" BorderThickness="0"
                                                 Command="{Binding DataContext.ViewHistoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}"/>
-                                        <Button Content="Deactivate"
+										<Button Content="Deactivate"
                                                 FontSize="11" Padding="6,2"
                                                 Background="#FEE2E2" Foreground="#B91C1C" BorderThickness="0"
                                                 Command="{Binding DataContext.DeactivateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Border>
+									</StackPanel>
+								</DataTemplate>
+							</DataGridTemplateColumn.CellTemplate>
+						</DataGridTemplateColumn>
+					</DataGrid.Columns>
+				</DataGrid>
+			</Border>
 
-            <!-- Right: Add/Edit Form OR Purchase History -->
-            <Border Grid.Row="2" Grid.RowSpan="3" Grid.Column="2" Style="{StaticResource PanelStyle}" VerticalAlignment="Top">
-                <Grid>
-                    <!-- Add/Edit Form -->
-                    <StackPanel Visibility="{Binding IsViewingHistory, Converter={StaticResource InverseBoolToVis}}">
-                        <TextBlock Text="{Binding FormHeader}" FontWeight="Bold" FontSize="15" Margin="0,0,0,14"/>
+			<!-- Right: Form OR Purchase History OR Khata Ledger -->
+			<Border Grid.Row="2" Grid.RowSpan="3" Grid.Column="2" Style="{StaticResource PanelStyle}" VerticalAlignment="Top">
+				<Grid>
+					<!-- Add/Edit Form -->
+					<StackPanel>
+						<StackPanel.Style>
+							<Style TargetType="StackPanel">
+								<Setter Property="Visibility" Value="Visible"/>
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding IsViewingHistory}" Value="True">
+										<Setter Property="Visibility" Value="Collapsed"/>
+									</DataTrigger>
+									<DataTrigger Binding="{Binding IsViewingLedger}" Value="True">
+										<Setter Property="Visibility" Value="Collapsed"/>
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</StackPanel.Style>
 
-                        <TextBlock Text="Name *" Style="{StaticResource FieldLabel}"/>
-                        <TextBox Text="{Binding FormName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
+						<TextBlock Text="{Binding FormHeader}" FontWeight="Bold" FontSize="15" Margin="0,0,0,14"/>
 
-                        <TextBlock Text="Phone" Style="{StaticResource FieldLabel}"/>
-                        <TextBox Text="{Binding FormPhone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
+						<TextBlock Text="Name *" Style="{StaticResource FieldLabel}"/>
+						<TextBox Text="{Binding FormName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
 
-                        <TextBlock Text="Email" Style="{StaticResource FieldLabel}"/>
-                        <TextBox Text="{Binding FormEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
+						<TextBlock Text="Phone" Style="{StaticResource FieldLabel}"/>
+						<TextBox Text="{Binding FormPhone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
 
-                        <TextBlock Text="Address" Style="{StaticResource FieldLabel}"/>
-                        <TextBox Text="{Binding FormAddress, UpdateSourceTrigger=PropertyChanged}"
+						<TextBlock Text="Email" Style="{StaticResource FieldLabel}"/>
+						<TextBox Text="{Binding FormEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
+
+						<TextBlock Text="Address" Style="{StaticResource FieldLabel}"/>
+						<TextBox Text="{Binding FormAddress, UpdateSourceTrigger=PropertyChanged}"
                                  AcceptsReturn="True" TextWrapping="Wrap" Height="50" Style="{StaticResource FieldBox}"/>
 
-                        <TextBlock Text="Notes" Style="{StaticResource FieldLabel}"/>
-                        <TextBox Text="{Binding FormNotes, UpdateSourceTrigger=PropertyChanged}"
+						<TextBlock Text="Notes" Style="{StaticResource FieldLabel}"/>
+						<TextBox Text="{Binding FormNotes, UpdateSourceTrigger=PropertyChanged}"
                                  AcceptsReturn="True" TextWrapping="Wrap" Height="50" Style="{StaticResource FieldBox}"/>
 
-                        <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="12" Margin="0,4,0,10">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#16A34A"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasError}" Value="True">
-                                            <Setter Property="Foreground" Value="#DC2626"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+						<TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="12" Margin="0,4,0,10">
+							<TextBlock.Style>
+								<Style TargetType="TextBlock">
+									<Setter Property="Foreground" Value="#16A34A"/>
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding HasError}" Value="True">
+											<Setter Property="Foreground" Value="#DC2626"/>
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</TextBlock.Style>
+						</TextBlock>
 
-                        <UniformGrid Columns="2" Rows="1">
-                            <Button Content="Save" Height="34" Margin="0,0,6,0"
+						<UniformGrid Columns="2" Rows="1">
+							<Button Content="Save" Height="34" Margin="0,0,6,0"
                                     Background="#1E3A8A" Foreground="White" FontWeight="Bold"
                                     Command="{Binding SaveCommand}"/>
-                            <Button Content="Clear / New" Height="34" Margin="6,0,0,0"
+							<Button Content="Clear / New" Height="34" Margin="6,0,0,0"
                                     Background="#E5E7EB"
                                     Command="{Binding NewCustomerCommand}"/>
-                        </UniformGrid>
-                    </StackPanel>
+						</UniformGrid>
+					</StackPanel>
 
-                    <!-- Purchase History Panel -->
-                    <StackPanel Visibility="{Binding IsViewingHistory, Converter={StaticResource BoolToVis}}">
-                        <Grid Margin="0,0,0,14">
-                            <TextBlock Text="{Binding HistoryHeader}" FontWeight="Bold" FontSize="15"/>
-                            <Button Content="✕ Close" HorizontalAlignment="Right"
+					<!-- Purchase History Panel -->
+					<StackPanel Visibility="{Binding IsViewingHistory, Converter={StaticResource BoolToVis}}">
+						<Grid Margin="0,0,0,14">
+							<TextBlock Text="{Binding HistoryHeader}" FontWeight="Bold" FontSize="15"/>
+							<Button Content="✕ Close" HorizontalAlignment="Right"
                                     FontSize="11" Padding="6,2" Background="Transparent" BorderThickness="0"
                                     Command="{Binding CloseHistoryCommand}"/>
-                        </Grid>
+						</Grid>
 
-                        <TextBlock Text="No purchase history yet. This will populate automatically once sales are recorded."
+						<TextBlock Text="No purchase history yet. This will populate automatically once sales are recorded."
                                    Foreground="Gray" FontStyle="Italic" TextWrapping="Wrap"
                                    Visibility="{Binding HasSalesHistory, Converter={StaticResource InverseBoolToVis}}"/>
 
-                        <ItemsControl ItemsSource="{Binding SalesHistory}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0">
-                                            <Run Text="{Binding InvoiceNumber}"/>
-                                            <LineBreak/>
-                                            <Run Text="{Binding SaleDate, StringFormat='dd MMM yyyy'}" Foreground="Gray" FontSize="11"/>
-                                        </TextBlock>
-                                        <TextBlock Grid.Column="1" Text="{Binding GrandTotal, StringFormat='Rs. {0:N0}'}"
+						<ItemsControl ItemsSource="{Binding SalesHistory}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate>
+									<Grid Margin="0,4">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="*"/>
+											<ColumnDefinition Width="Auto"/>
+										</Grid.ColumnDefinitions>
+										<TextBlock Grid.Column="0">
+											<Run Text="{Binding InvoiceNumber}"/>
+											<LineBreak/>
+											<Run Text="{Binding SaleDate, StringFormat='dd MMM yyyy'}" Foreground="Gray" FontSize="11"/>
+										</TextBlock>
+										<TextBlock Grid.Column="1" Text="{Binding GrandTotal, StringFormat='Rs. {0:N0}'}"
                                                    FontWeight="Bold" VerticalAlignment="Center"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </Grid>
+									</Grid>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
 
-        <Border Background="#AAFFFFFF"
+					<!-- Khata (Credit Ledger) Panel -->
+					<StackPanel Visibility="{Binding IsViewingLedger, Converter={StaticResource BoolToVis}}">
+						<Grid Margin="0,0,0,10">
+							<TextBlock Text="{Binding LedgerHeader}" FontWeight="Bold" FontSize="15"/>
+							<Button Content="✕ Close" HorizontalAlignment="Right"
+                                    FontSize="11" Padding="6,2" Background="Transparent" BorderThickness="0"
+                                    Command="{Binding CloseLedgerCommand}"/>
+						</Grid>
+
+						<Border Background="#FEF3C7" CornerRadius="6" Padding="10" Margin="0,0,0,14">
+							<Grid>
+								<TextBlock Text="Outstanding Balance" FontSize="12" Foreground="#92400E"/>
+								<TextBlock Text="{Binding LedgerOutstandingBalance, StringFormat='Rs. {0:N0}'}"
+                                           HorizontalAlignment="Right" FontWeight="Bold" FontSize="16" Foreground="#92400E"/>
+							</Grid>
+						</Border>
+
+						<TextBlock Text="Transaction History" FontWeight="Bold" FontSize="13" Margin="0,0,0,8"/>
+
+						<TextBlock Text="No transactions yet."
+                                   Foreground="Gray" FontStyle="Italic"
+                                   Visibility="{Binding HasLedgerEntries, Converter={StaticResource InverseBoolToVis}}"
+                                   Margin="0,0,0,10"/>
+
+						<DataGrid ItemsSource="{Binding LedgerEntries}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  RowHeight="30"
+                                  MaxHeight="200"
+                                  CanUserAddRows="False"
+                                  Margin="0,0,0,16">
+							<DataGrid.Columns>
+								<DataGridTextColumn Header="Date" Binding="{Binding TransactionDate, StringFormat='dd MMM yy'}" Width="Auto"/>
+								<DataGridTextColumn Header="Debit" Binding="{Binding Debit, StringFormat='{}{0:N0}'}" Width="Auto"/>
+								<DataGridTextColumn Header="Credit" Binding="{Binding Credit, StringFormat='{}{0:N0}'}" Width="Auto"/>
+								<DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat='{}{0:N0}'}" Width="Auto"/>
+								<DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*"/>
+							</DataGrid.Columns>
+						</DataGrid>
+
+						<TextBlock Text="Record Payment" FontWeight="Bold" FontSize="13" Margin="0,0,0,8"/>
+
+						<TextBlock Text="Amount *" Style="{StaticResource FieldLabel}"/>
+						<TextBox Text="{Binding PaymentAmount, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
+
+						<TextBlock Text="Notes" Style="{StaticResource FieldLabel}"/>
+						<TextBox Text="{Binding PaymentNotes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
+
+						<TextBlock Text="{Binding LedgerStatusMessage}" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,10">
+							<TextBlock.Style>
+								<Style TargetType="TextBlock">
+									<Setter Property="Foreground" Value="#16A34A"/>
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding LedgerHasError}" Value="True">
+											<Setter Property="Foreground" Value="#DC2626"/>
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</TextBlock.Style>
+						</TextBlock>
+
+						<Button Content="Record Payment" Height="34" FontWeight="Bold"
+                                Background="#16A34A" Foreground="White"
+                                Command="{Binding RecordPaymentCommand}"/>
+					</StackPanel>
+				</Grid>
+			</Border>
+		</Grid>
+
+		<Border Background="#AAFFFFFF"
                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="Working..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
-        </Border>
-    </Grid>
+			<TextBlock Text="Working..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+		</Border>
+	</Grid>
 </UserControl>

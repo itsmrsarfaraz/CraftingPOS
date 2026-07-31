@@ -10,11 +10,12 @@ public class CustomerDto
     public string? Notes { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
+    public decimal OutstandingBalance { get; set; }
 }
 
 public class SaveCustomerDto
 {
-    public int Id { get; set; } // 0 = create
+    public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Phone { get; set; }
     public string? Email { get; set; }

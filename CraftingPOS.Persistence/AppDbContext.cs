@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<CustomerLedger> CustomerLedgers => Set<CustomerLedger>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

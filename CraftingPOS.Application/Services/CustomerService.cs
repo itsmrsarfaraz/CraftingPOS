@@ -10,18 +10,32 @@ namespace CraftingPOS.Application.Services;
 public class CustomerService : ICustomerService
 {
     private readonly ICustomerRepository _customerRepository;
+    private readonly ICustomerLedgerService _customerLedgerService;
     private readonly CurrentUserContext _currentUserContext;
 
-    public CustomerService(ICustomerRepository customerRepository, CurrentUserContext currentUserContext)
+    public CustomerService(
+        ICustomerRepository customerRepository,
+        ICustomerLedgerService customerLedgerService,
+        CurrentUserContext currentUserContext)
     {
         _customerRepository = customerRepository;
+        _customerLedgerService = customerLedgerService;
         _currentUserContext = currentUserContext;
     }
 
     public async Task<List<CustomerDto>> GetAllAsync()
     {
         var customers = await _customerRepository.GetAllAsync();
-        return customers.OrderBy(c => c.Name).Select(MapToDto).ToList();
+        var result = new List<CustomerDto>();
+
+        foreach (var c in customers.OrderBy(c => c.Name))
+        {
+            var dto = MapToDto(c);
+            dto.OutstandingBalance = await _customerLedgerService.GetOutstandingBalanceAsync(c.Id);
+            result.Add(dto);
+        }
+
+        return result;
     }
 
     public async Task<List<CustomerDto>> SearchAsync(string searchTerm)
@@ -32,7 +46,16 @@ public class CustomerService : ICustomerService
         }
 
         var customers = await _customerRepository.SearchAsync(searchTerm.Trim());
-        return customers.OrderBy(c => c.Name).Select(MapToDto).ToList();
+        var result = new List<CustomerDto>();
+
+        foreach (var c in customers.OrderBy(c => c.Name))
+        {
+            var dto = MapToDto(c);
+            dto.OutstandingBalance = await _customerLedgerService.GetOutstandingBalanceAsync(c.Id);
+            result.Add(dto);
+        }
+
+        return result;
     }
 
     public async Task<int> CountAsync()
@@ -49,9 +72,6 @@ public class CustomerService : ICustomerService
             return OperationResult.Fail("Customer name is required.");
         }
 
-        // Phone is optional, but if provided, warn on duplicates (soft rule —
-        // unlike Category/Brand/Supplier names, we don't hard-block this,
-        // since a household may share one phone across multiple customers).
         if (!string.IsNullOrWhiteSpace(dto.Phone))
         {
             var excludeId = dto.Id > 0 ? dto.Id : (int?)null;
@@ -69,7 +89,6 @@ public class CustomerService : ICustomerService
 
         if (dto.Id == 0)
         {
-            // FR-CUST-001: create
             var customer = new Customer
             {
                 Name = name,
@@ -87,7 +106,6 @@ public class CustomerService : ICustomerService
         }
         else
         {
-            // FR-CUST-002: edit
             var customer = await _customerRepository.GetByIdAsync(dto.Id);
             if (customer == null)
             {
@@ -118,7 +136,6 @@ public class CustomerService : ICustomerService
             return OperationResult.Fail("Customer not found.");
         }
 
-        // FR-CUST-003: deactivate (soft delete)
         customer.IsActive = false;
         customer.UpdatedBy = _currentUserContext.Session?.Username ?? "system";
 
@@ -133,8 +150,7 @@ public class CustomerService : ICustomerService
 
     public Task<List<SalesHistoryItemDto>> GetSalesHistoryAsync(int customerId)
     {
-        // TODO (Sprint 10 - Sales): replace with a real query against Sales
-        // filtered by CustomerId, ordered by SaleDate descending.
+        // TODO (Sprint 10 - Sales): replace with a real query against Sales.
         return Task.FromResult(new List<SalesHistoryItemDto>());
     }
 
