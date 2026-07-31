@@ -10,11 +10,16 @@ namespace CraftingPOS.Application.Services;
 public class SupplierService : ISupplierService
 {
     private readonly ISupplierRepository _supplierRepository;
+    private readonly IPurchaseRepository _purchaseRepository;
     private readonly CurrentUserContext _currentUserContext;
 
-    public SupplierService(ISupplierRepository supplierRepository, CurrentUserContext currentUserContext)
+    public SupplierService(
+        ISupplierRepository supplierRepository,
+        IPurchaseRepository purchaseRepository,
+        CurrentUserContext currentUserContext)
     {
         _supplierRepository = supplierRepository;
+        _purchaseRepository = purchaseRepository;
         _currentUserContext = currentUserContext;
     }
 
@@ -48,7 +53,6 @@ public class SupplierService : ISupplierService
 
         if (dto.Id == 0)
         {
-            // FR-SUP-001: create
             var supplier = new Supplier
             {
                 Name = name,
@@ -67,7 +71,6 @@ public class SupplierService : ISupplierService
         }
         else
         {
-            // FR-SUP-002: edit
             var supplier = await _supplierRepository.GetByIdAsync(dto.Id);
             if (supplier == null)
             {
@@ -99,7 +102,6 @@ public class SupplierService : ISupplierService
             return OperationResult.Fail("Supplier not found.");
         }
 
-        // FR-SUP-003: deactivate (soft delete)
         supplier.IsActive = false;
         supplier.UpdatedBy = _currentUserContext.Session?.Username ?? "system";
 
@@ -112,11 +114,20 @@ public class SupplierService : ISupplierService
         return OperationResult.Ok();
     }
 
-    public Task<List<PurchaseHistoryItemDto>> GetPurchaseHistoryAsync(int supplierId)
+    public async Task<List<PurchaseHistoryItemDto>> GetPurchaseHistoryAsync(int supplierId)
     {
-        // TODO (Sprint 6 - Purchases): replace with a real query against Purchases
-        // filtered by SupplierId, ordered by PurchaseDate descending.
-        return Task.FromResult(new List<PurchaseHistoryItemDto>());
+        // Sprint 6: real implementation, replacing the Sprint 5 placeholder.
+        var purchases = await _purchaseRepository.GetBySupplierIdAsync(supplierId);
+
+        return purchases
+            .OrderByDescending(p => p.PurchaseDate)
+            .Select(p => new PurchaseHistoryItemDto
+            {
+                InvoiceNumber = p.InvoiceNumber,
+                PurchaseDate = p.PurchaseDate,
+                TotalAmount = p.TotalAmount
+            })
+            .ToList();
     }
 
     private static SupplierDto MapToDto(Supplier s)

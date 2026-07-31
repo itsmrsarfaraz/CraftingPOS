@@ -14,23 +14,22 @@ public partial class ProductsViewModel : ObservableObject
 {
     private readonly IProductService _productService;
     private readonly ICategoryService _categoryService;
+    private readonly IBrandService _brandService;
     private readonly IProductVariantService _productVariantService;
     private readonly CurrentUserContext _currentUserContext;
 
     public ObservableCollection<ProductDto> Products { get; } = new();
     public ObservableCollection<CategoryDto> Categories { get; } = new();
+    public ObservableCollection<BrandDto> Brands { get; } = new();
     public ObservableCollection<ProductVariantDto> Variants { get; } = new();
     public List<ProductType> ProductTypes { get; } = Enum.GetValues<ProductType>().ToList();
 
-    [ObservableProperty]
-    private ProductDto? selectedProduct;
+    [ObservableProperty] private ProductDto? selectedProduct;
+    [ObservableProperty] private string searchTerm = string.Empty;
 
-    [ObservableProperty]
-    private string searchTerm = string.Empty;
-
-    // ---- Product form fields ----
     [ObservableProperty] private int formId;
     [ObservableProperty] private CategoryDto? formCategory;
+    [ObservableProperty] private BrandDto? formBrand;
     [ObservableProperty] private string formBarcode = string.Empty;
     [ObservableProperty] private string formSku = string.Empty;
     [ObservableProperty] private string formName = string.Empty;
@@ -47,7 +46,6 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private string statusMessage = string.Empty;
     [ObservableProperty] private bool hasError;
 
-    // ---- Variant form fields ----
     [ObservableProperty] private ProductVariantDto? selectedVariant;
     [ObservableProperty] private int variantFormId;
     [ObservableProperty] private string variantName = string.Empty;
@@ -62,24 +60,20 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private bool variantHasError;
 
     public bool IsOwner => _currentUserContext.Session?.RoleName == RoleNames.Owner;
-
-    /// <summary>True whenever the current form's Product Type is Variable, regardless of save state.</summary>
     public bool IsVariableProductType => FormProductType == ProductType.Variable;
-
-    /// <summary>Show the variants grid/form only once the parent product has been saved (FormId > 0).</summary>
     public bool ShowVariantsPanel => FormProductType == ProductType.Variable && FormId > 0;
-
-    /// <summary>Prompt to save the product first, shown only for new (unsaved) Variable products.</summary>
     public bool ShowVariantsSaveFirstMessage => FormProductType == ProductType.Variable && FormId == 0;
 
     public ProductsViewModel(
         IProductService productService,
         ICategoryService categoryService,
+        IBrandService brandService,
         IProductVariantService productVariantService,
         CurrentUserContext currentUserContext)
     {
         _productService = productService;
         _categoryService = categoryService;
+        _brandService = brandService;
         _productVariantService = productVariantService;
         _currentUserContext = currentUserContext;
     }
@@ -93,6 +87,10 @@ public partial class ProductsViewModel : ObservableObject
             var categories = await _categoryService.GetAllAsync();
             Categories.Clear();
             foreach (var c in categories) Categories.Add(c);
+
+            var brands = await _brandService.GetAllAsync();
+            Brands.Clear();
+            foreach (var b in brands) Brands.Add(b);
 
             var products = await _productService.GetAllAsync();
             Products.Clear();
@@ -134,17 +132,18 @@ public partial class ProductsViewModel : ObservableObject
         }
 
         FormCategory = Categories.FirstOrDefault(c => c.Id == value.CategoryId);
+        FormBrand = value.BrandId.HasValue ? Brands.FirstOrDefault(b => b.Id == value.BrandId.Value) : null;
         FormBarcode = value.Barcode;
         FormSku = value.SKU;
         FormName = value.Name;
         FormDescription = value.Description ?? string.Empty;
-        FormProductType = value.ProductType; // set BEFORE FormId so the variants panel resolves correctly
+        FormProductType = value.ProductType;
         FormCostPrice = value.CostPrice;
         FormSellingPrice = value.SellingPrice;
         FormCurrentStock = value.CurrentStock;
         FormMinimumStock = value.MinimumStock;
         FormImageSourcePath = null;
-        FormId = value.Id; // triggers variant auto-load if this is a Variable product
+        FormId = value.Id;
         FormHeader = $"Edit Product — {value.Name}";
         ClearStatus();
         NewVariant();
@@ -178,6 +177,7 @@ public partial class ProductsViewModel : ObservableObject
         SelectedProduct = null;
         FormId = 0;
         FormCategory = null;
+        FormBrand = null;
         FormBarcode = string.Empty;
         FormSku = string.Empty;
         FormName = string.Empty;
@@ -223,6 +223,7 @@ public partial class ProductsViewModel : ObservableObject
         {
             Id = FormId,
             CategoryId = FormCategory.Id,
+            BrandId = FormBrand?.Id,
             Barcode = FormBarcode,
             SKU = FormSku,
             Name = FormName,
@@ -254,7 +255,6 @@ public partial class ProductsViewModel : ObservableObject
 
             if (FormProductType == ProductType.Variable)
             {
-                // Keep the form open with the saved Id so variants can be added right away.
                 FormId = result.Data;
                 FormHeader = $"Edit Product — {FormName} (Variable)";
             }
@@ -294,8 +294,6 @@ public partial class ProductsViewModel : ObservableObject
             IsBusy = false;
         }
     }
-
-    // ---- Variant management ----
 
     private async Task LoadVariantsAsync(int productId)
     {

@@ -73,6 +73,7 @@
 						<DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
 						<DataGridTextColumn Header="Type" Binding="{Binding ProductType}" Width="Auto"/>
 						<DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="Auto"/>
+						<DataGridTextColumn Header="Brand" Binding="{Binding BrandName}" Width="Auto"/>
 						<DataGridTextColumn Header="Stock" Binding="{Binding CurrentStock}" Width="Auto"/>
 						<DataGridTextColumn Header="Cost" Binding="{Binding CostPrice, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
 						<DataGridTextColumn Header="Price" Binding="{Binding SellingPrice, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
@@ -102,6 +103,12 @@
                                   SelectedItem="{Binding FormCategory}"
                                   DisplayMemberPath="Name"
                                   Padding="6" Margin="0,0,0,10"/>
+
+						<TextBlock Text="Brand (optional)" Style="{StaticResource FieldLabel}"/>
+						<ComboBox ItemsSource="{Binding Brands}"
+								  SelectedItem="{Binding FormBrand}"
+								  DisplayMemberPath="Name"
+								  Padding="6" Margin="0,0,0,10"/>
 
 						<TextBlock Text="Product Type" Style="{StaticResource FieldLabel}"/>
 						<ComboBox ItemsSource="{Binding ProductTypes}"

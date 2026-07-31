@@ -20,11 +20,17 @@ public static class DependencyInjection
         services.AddTransient<CategoriesViewModel>();
         services.AddTransient<CategoriesView>();
 
+        services.AddTransient<BrandsViewModel>();
+        services.AddTransient<BrandsView>();
+
         services.AddTransient<ProductsViewModel>();
         services.AddTransient<ProductsView>();
 
         services.AddTransient<SuppliersViewModel>();
         services.AddTransient<SuppliersView>();
+
+        services.AddTransient<PurchasesViewModel>();
+        services.AddTransient<PurchasesView>();
 
         return services;
     }

@@ -8,6 +8,10 @@ public class Product : BaseEntity
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
 
+    // Optional — not every business classifies by brand, so this stays nullable.
+    public int? BrandId { get; set; }
+    public Brand? Brand { get; set; }
+
     public string Barcode { get; set; } = string.Empty;
     public string SKU { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -18,9 +22,6 @@ public class Product : BaseEntity
     public decimal CostPrice { get; set; }
     public decimal SellingPrice { get; set; }
 
-    // For Standard products, stock is tracked here directly.
-    // For Variable products, stock is tracked per-variant (see ProductVariant),
-    // and CurrentStock/MinimumStock on the parent are kept at 0 / unused.
     public decimal CurrentStock { get; set; }
     public decimal MinimumStock { get; set; }
 

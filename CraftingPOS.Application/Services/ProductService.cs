@@ -60,7 +60,6 @@ public class ProductService : IProductService
         if (string.IsNullOrWhiteSpace(dto.SKU))
             return OperationResult<int>.Fail("SKU is required.");
 
-        // BR-PROD-003: Selling Price cannot be less than Cost Price (Owner override allowed)
         var isOwner = _currentUserContext.Session?.RoleName == RoleNames.Owner;
         if (dto.SellingPrice < dto.CostPrice && !(dto.AllowPriceOverride && isOwner))
         {
@@ -70,13 +69,11 @@ public class ProductService : IProductService
 
         var excludeId = dto.Id > 0 ? dto.Id : (int?)null;
 
-        // BR-PROD-001: Barcode must be unique
         if (await _productRepository.BarcodeExistsAsync(dto.Barcode.Trim(), excludeId))
         {
             return OperationResult<int>.Fail($"Barcode '{dto.Barcode}' is already assigned to another product.");
         }
 
-        // BR-PROD-002: SKU must be unique
         if (await _productRepository.SkuExistsAsync(dto.SKU.Trim(), excludeId))
         {
             return OperationResult<int>.Fail($"SKU '{dto.SKU}' is already assigned to another product.");
@@ -95,6 +92,7 @@ public class ProductService : IProductService
             var product = new Product
             {
                 CategoryId = dto.CategoryId,
+                BrandId = dto.BrandId,
                 Barcode = dto.Barcode.Trim(),
                 SKU = dto.SKU.Trim(),
                 Name = dto.Name.Trim(),
@@ -123,6 +121,7 @@ public class ProductService : IProductService
                 return OperationResult<int>.Fail("Product not found.");
 
             product.CategoryId = dto.CategoryId;
+            product.BrandId = dto.BrandId;
             product.Barcode = dto.Barcode.Trim();
             product.SKU = dto.SKU.Trim();
             product.Name = dto.Name.Trim();
@@ -177,6 +176,8 @@ public class ProductService : IProductService
             Id = p.Id,
             CategoryId = p.CategoryId,
             CategoryName = p.Category?.Name ?? string.Empty,
+            BrandId = p.BrandId,
+            BrandName = p.Brand?.Name,
             Barcode = p.Barcode,
             SKU = p.SKU,
             Name = p.Name,

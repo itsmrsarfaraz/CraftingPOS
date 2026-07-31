@@ -8,6 +8,9 @@ public class ProductDto
     public int CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
 
+    public int? BrandId { get; set; }
+    public string? BrandName { get; set; }
+
     public string Barcode { get; set; } = string.Empty;
     public string SKU { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -29,8 +32,9 @@ public class ProductDto
 
 public class SaveProductDto
 {
-    public int Id { get; set; } // 0 = create
+    public int Id { get; set; }
     public int CategoryId { get; set; }
+    public int? BrandId { get; set; }
     public string Barcode { get; set; } = string.Empty;
     public string SKU { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -42,9 +46,6 @@ public class SaveProductDto
     public decimal CurrentStock { get; set; }
     public decimal MinimumStock { get; set; }
 
-    /// <summary>Local file path picked by the user in the file dialog. Null if unchanged.</summary>
     public string? NewImageSourcePath { get; set; }
-
-    /// <summary>Set true only by an Owner to allow SellingPrice &lt; CostPrice (BR-PROD-003).</summary>
     public bool AllowPriceOverride { get; set; }
 }

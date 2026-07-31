@@ -16,30 +16,38 @@ public partial class MainWindow : Window
 
     private void DashboardButton_Click(object sender, RoutedEventArgs e) => ShowDashboard();
     private void CategoriesButton_Click(object sender, RoutedEventArgs e) => ShowCategories();
+    private void BrandsButton_Click(object sender, RoutedEventArgs e) => ShowBrands();
     private void ProductsButton_Click(object sender, RoutedEventArgs e) => ShowProducts();
     private void SuppliersButton_Click(object sender, RoutedEventArgs e) => ShowSuppliers();
+    private void PurchasesButton_Click(object sender, RoutedEventArgs e) => ShowPurchases();
 
     private void ShowDashboard()
     {
-        var view = App.AppHost.Services.GetRequiredService<DashboardView>();
-        MainContent.Content = view;
+        MainContent.Content = App.AppHost.Services.GetRequiredService<DashboardView>();
     }
 
     private void ShowCategories()
     {
-        var view = App.AppHost.Services.GetRequiredService<CategoriesView>();
-        MainContent.Content = view;
+        MainContent.Content = App.AppHost.Services.GetRequiredService<CategoriesView>();
+    }
+
+    private void ShowBrands()
+    {
+        MainContent.Content = App.AppHost.Services.GetRequiredService<BrandsView>();
     }
 
     private void ShowProducts()
     {
-        var view = App.AppHost.Services.GetRequiredService<ProductsView>();
-        MainContent.Content = view;
+        MainContent.Content = App.AppHost.Services.GetRequiredService<ProductsView>();
     }
 
     private void ShowSuppliers()
     {
-        var view = App.AppHost.Services.GetRequiredService<SuppliersView>();
-        MainContent.Content = view;
+        MainContent.Content = App.AppHost.Services.GetRequiredService<SuppliersView>();
+    }
+
+    private void ShowPurchases()
+    {
+        MainContent.Content = App.AppHost.Services.GetRequiredService<PurchasesView>();
     }
 }

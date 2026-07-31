@@ -23,7 +23,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.CurrentStock).HasColumnType("decimal(18,3)");
         builder.Property(p => p.MinimumStock).HasColumnType("decimal(18,3)");
 
-        // Indexes for search performance (SRS Part 4, Section 21)
         builder.HasIndex(p => p.Barcode);
         builder.HasIndex(p => p.SKU);
         builder.HasIndex(p => p.Name);
@@ -32,6 +31,12 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .WithMany()
             .HasForeignKey(p => p.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(p => p.Brand)
+            .WithMany()
+            .HasForeignKey(p => p.BrandId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         builder.HasMany(p => p.Variants)
             .WithOne(v => v.Product)
