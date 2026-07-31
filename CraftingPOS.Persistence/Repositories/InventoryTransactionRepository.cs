@@ -1,5 +1,6 @@
 using CraftingPOS.Domain.Entities;
 using CraftingPOS.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace CraftingPOS.Persistence.Repositories;
 
@@ -20,5 +21,19 @@ public class InventoryTransactionRepository : IInventoryTransactionRepository
     public Task SaveChangesAsync()
     {
         return _context.SaveChangesAsync();
+    }
+
+    public async Task<List<InventoryTransaction>> GetByProductIdAsync(int productId)
+    {
+        return await _context.InventoryTransactions
+            .Where(t => t.ProductId == productId && t.ProductVariantId == null)
+            .ToListAsync();
+    }
+
+    public async Task<List<InventoryTransaction>> GetByVariantIdAsync(int variantId)
+    {
+        return await _context.InventoryTransactions
+            .Where(t => t.ProductVariantId == variantId)
+            .ToListAsync();
     }
 }

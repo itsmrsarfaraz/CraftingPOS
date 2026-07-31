@@ -5,5 +5,7 @@
 	<Application.Resources>
 		<conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
 		<conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+		<conv:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
+		<conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
 	</Application.Resources>
 </Application>

@@ -53,7 +53,7 @@
 				<Button x:Name="ProductsButton" Content="Products" Style="{StaticResource SidebarButtonStyle}" Click="ProductsButton_Click"/>
 				<Button x:Name="CategoriesButton" Content="Categories" Style="{StaticResource SidebarButtonStyle}" Click="CategoriesButton_Click"/>
 				<Button x:Name="BrandsButton" Content="Brands" Style="{StaticResource SidebarButtonStyle}" Click="BrandsButton_Click"/>
-				<Button x:Name="InventoryButton" Content="Inventory" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
+				<Button x:Name="InventoryButton" Content="Inventory" Style="{StaticResource SidebarButtonStyle}" Click="InventoryButton_Click"/>
 				<Button x:Name="PurchasesButton" Content="Purchases" Style="{StaticResource SidebarButtonStyle}" Click="PurchasesButton_Click"/>
 				<Button x:Name="CustomersButton" Content="Customers" Style="{StaticResource SidebarButtonStyle}" Click="CustomersButton_Click"/>
 				<Button x:Name="SuppliersButton" Content="Suppliers" Style="{StaticResource SidebarButtonStyle}" Click="SuppliersButton_Click"/>

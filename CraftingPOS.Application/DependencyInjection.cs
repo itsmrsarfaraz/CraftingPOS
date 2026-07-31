@@ -11,7 +11,6 @@ public static class DependencyInjection
     {
         services.AddSingleton<CurrentUserContext>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IBrandService, BrandService>();
         services.AddScoped<IProductService, ProductService>();
@@ -20,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<IPurchaseService, PurchaseService>();
         services.AddScoped<ICustomerLedgerService, CustomerLedgerService>();
         services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<IDashboardService, DashboardService>(); // registered after IInventoryService, which it depends on
 
         return services;
     }
