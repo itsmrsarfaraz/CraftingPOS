@@ -32,6 +32,9 @@ public static class DependencyInjection
         services.AddTransient<PurchasesViewModel>();
         services.AddTransient<PurchasesView>();
 
+        services.AddTransient<CustomersViewModel>();
+        services.AddTransient<CustomersView>();
+
         return services;
     }
 }

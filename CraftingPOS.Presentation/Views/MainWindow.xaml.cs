@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private void ProductsButton_Click(object sender, RoutedEventArgs e) => ShowProducts();
     private void SuppliersButton_Click(object sender, RoutedEventArgs e) => ShowSuppliers();
     private void PurchasesButton_Click(object sender, RoutedEventArgs e) => ShowPurchases();
+    private void CustomersButton_Click(object sender, RoutedEventArgs e) => ShowCustomers();
 
     private void ShowDashboard()
     {
@@ -49,5 +50,10 @@ public partial class MainWindow : Window
     private void ShowPurchases()
     {
         MainContent.Content = App.AppHost.Services.GetRequiredService<PurchasesView>();
+    }
+
+    private void ShowCustomers()
+    {
+        MainContent.Content = App.AppHost.Services.GetRequiredService<CustomersView>();
     }
 }

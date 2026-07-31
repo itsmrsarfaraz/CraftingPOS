@@ -8,11 +8,16 @@ public class DashboardService : IDashboardService
 {
     private readonly IProductService _productService;
     private readonly ISupplierService _supplierService;
+    private readonly ICustomerService _customerService;
 
-    public DashboardService(IProductService productService, ISupplierService supplierService)
+    public DashboardService(
+        IProductService productService,
+        ISupplierService supplierService,
+        ICustomerService customerService)
     {
         _productService = productService;
         _supplierService = supplierService;
+        _customerService = customerService;
     }
 
     public async Task<DashboardSummaryDto> GetSummaryAsync()
@@ -29,10 +34,9 @@ public class DashboardService : IDashboardService
 
             summary.TotalProducts = await _productService.CountAsync();
 
-            // TODO (Sprint 7 - Customers): replace with real Customers.Count()
-            summary.TotalCustomers = 0;
+            // Sprint 7: real customer count
+            summary.TotalCustomers = await _customerService.CountAsync();
 
-            // Sprint 5: real supplier count
             summary.TotalSuppliers = await _supplierService.CountAsync();
 
             // TODO (Sprint 9 - Inventory): replace with real low stock query
