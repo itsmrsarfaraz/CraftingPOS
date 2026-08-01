@@ -52,6 +52,13 @@ public static class DependencyInjection
         services.AddTransient<ReceiptPreviewViewModel>();
         services.AddTransient<ReceiptPreviewWindow>();
 
+        services.AddTransient<BackupViewModel>();
+        services.AddTransient<BackupView>();
+
+        services.AddTransient<UsersViewModel>();
+        services.AddTransient<UsersView>();
+
+
         return services;
     }
 }

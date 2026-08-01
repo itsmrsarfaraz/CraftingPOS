@@ -33,15 +33,18 @@ public partial class PosView : UserControl
         }
     }
 
+    private void OwnerAuthPasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
+    {
+        _viewModel.OwnerAuthPassword = OwnerAuthPasswordBox.Password;
+    }
+
     private async void OnSaleCompleted(int saleId)
     {
         var window = App.AppHost.Services.GetRequiredService<ReceiptPreviewWindow>();
         var owner = App.AppHost.Services.GetRequiredService<MainWindow>();
 
         if (!ReferenceEquals(window, owner) && owner.IsVisible)
-        {
             window.Owner = owner;
-        }
 
         await window.LoadAsync(saleId);
         window.Show();

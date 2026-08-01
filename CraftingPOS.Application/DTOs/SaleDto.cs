@@ -8,7 +8,8 @@ public class CartItemLookupDto
     public int ProductId { get; set; }
     public int? ProductVariantId { get; set; }
     public string DisplayName { get; set; } = string.Empty;
-    public decimal UnitPrice { get; set; }
+    public decimal OriginalUnitPrice { get; set; }
+    public decimal EffectiveUnitPrice { get; set; } // after any active product discount
     public decimal UnitCost { get; set; }
     public decimal AvailableStock { get; set; }
 }
@@ -37,13 +38,24 @@ public class SaleItemDto
     public decimal LineTotal { get; set; }
 }
 
-public class CompleteSaleItemDto
+public class CompleteSaleDto
 {
-    public int ProductId { get; set; }
-    public int? ProductVariantId { get; set; }
-    public decimal Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-    public decimal UnitCost { get; set; }
+    public int? CustomerId { get; set; }
+    public List<CompleteSaleItemDto> Items { get; set; } = new();
+
+    public CraftingPOS.Domain.Enums.DiscountType CartDiscountType { get; set; } = CraftingPOS.Domain.Enums.DiscountType.Flat;
+    public decimal CartDiscountValue { get; set; }
+
+    /// <summary>True once an Owner/SystemAdmin has authorized exceeding the cashier ceiling for this transaction.</summary>
+    public bool DiscountOverrideAuthorized { get; set; }
+
+    /// <summary>True once an Owner has confirmed selling one or more items below cost.</summary>
+    public bool BelowCostConfirmed { get; set; }
+
+    public CraftingPOS.Domain.Enums.PaymentMethod PaymentMethod { get; set; }
+    public decimal AmountReceived { get; set; }
+    public string? ReferenceNumber { get; set; }
+    public string? Notes { get; set; }
 }
 
 public class CompleteSaleDto
@@ -51,13 +63,18 @@ public class CompleteSaleDto
     public int? CustomerId { get; set; }
     public List<CompleteSaleItemDto> Items { get; set; } = new();
 
-    public decimal CartDiscountAmount { get; set; }
-    public bool AllowDiscountOverride { get; set; } // true when the current session is an Owner
+    public CraftingPOS.Domain.Enums.DiscountType CartDiscountType { get; set; } = CraftingPOS.Domain.Enums.DiscountType.Flat;
+    public decimal CartDiscountValue { get; set; }
 
-    public PaymentMethod PaymentMethod { get; set; }
-    public decimal AmountReceived { get; set; } // relevant for Cash; ignored otherwise
-    public string? ReferenceNumber { get; set; } // relevant for Card/BankTransfer
+    /// <summary>True once an Owner/SystemAdmin has authorized exceeding the cashier ceiling for this transaction.</summary>
+    public bool DiscountOverrideAuthorized { get; set; }
 
+    /// <summary>True once an Owner has confirmed selling one or more items below cost.</summary>
+    public bool BelowCostConfirmed { get; set; }
+
+    public CraftingPOS.Domain.Enums.PaymentMethod PaymentMethod { get; set; }
+    public decimal AmountReceived { get; set; }
+    public string? ReferenceNumber { get; set; }
     public string? Notes { get; set; }
 }
 

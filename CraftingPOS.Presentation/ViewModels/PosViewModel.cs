@@ -16,9 +16,10 @@ public partial class CartLine : ObservableObject
     public string DisplayName { get; set; } = string.Empty;
     public decimal UnitCost { get; set; }
     public decimal AvailableStock { get; set; }
+    public bool HasProductDiscount { get; set; }
 
     [ObservableProperty] private decimal quantity;
-    [ObservableProperty] private decimal unitPrice;
+    [ObservableProperty] private decimal unitPrice; // already reflects any active product discount
 
     public decimal LineTotal => Quantity * UnitPrice;
 
@@ -32,19 +33,22 @@ public partial class PosViewModel : ObservableObject
     private readonly IProductService _productService;
     private readonly IProductVariantService _productVariantService;
     private readonly ICustomerService _customerService;
-    private readonly Application.Common.CurrentUserContext _currentUserContext;
+    private readonly IAuthService _authService;
+    private readonly CurrentUserContext _currentUserContext;
 
     public ObservableCollection<CartLine> Cart { get; } = new();
     public ObservableCollection<ProductDto> SearchResults { get; } = new();
     public ObservableCollection<CustomerDto> Customers { get; } = new();
     public ObservableCollection<ProductVariantDto> VariantPickerOptions { get; } = new();
     public List<PaymentMethod> PaymentMethods { get; } = Enum.GetValues<PaymentMethod>().ToList();
+    public List<DiscountType> DiscountTypes { get; } = Enum.GetValues<DiscountType>().ToList();
 
     [ObservableProperty] private string barcodeInput = string.Empty;
     [ObservableProperty] private string searchTerm = string.Empty;
     [ObservableProperty] private CustomerDto? selectedCustomer;
 
-    [ObservableProperty] private decimal cartDiscountAmount;
+    [ObservableProperty] private DiscountType cartDiscountType = DiscountType.Flat;
+    [ObservableProperty] private decimal cartDiscountValue;
     [ObservableProperty] private PaymentMethod selectedPaymentMethod = PaymentMethod.Cash;
     [ObservableProperty] private decimal amountReceived;
     [ObservableProperty] private string referenceNumber = string.Empty;
@@ -56,18 +60,29 @@ public partial class PosViewModel : ObservableObject
     [ObservableProperty] private string lastReceiptSummary = string.Empty;
     [ObservableProperty] private bool hasCompletedSale;
 
-    // Variant picker state — shown when a Variable product is clicked in search results.
     [ObservableProperty] private bool isPickingVariant;
     [ObservableProperty] private string variantPickerHeader = string.Empty;
 
+    // Owner authorization panel (discount ceiling exceeded)
+    [ObservableProperty] private bool showOwnerAuthPanel;
+    [ObservableProperty] private string ownerAuthUsername = string.Empty;
+    [ObservableProperty] private string ownerAuthPassword = string.Empty;
+    [ObservableProperty] private string ownerAuthMessage = string.Empty;
+    private bool _discountOverrideAuthorized;
+
     public event Action<int>? SaleCompleted;
 
-    public bool IsOwner => _currentUserContext.Session?.RoleName == CraftingPOS.Domain.Enums.RoleNames.Owner;
+    public bool IsOwner => _currentUserContext.Session?.RoleName is RoleNames.Owner or RoleNames.SystemAdmin;
     public bool IsCashPayment => SelectedPaymentMethod == PaymentMethod.Cash;
     public bool RequiresReference => SelectedPaymentMethod is PaymentMethod.Card or PaymentMethod.BankTransfer;
     public bool RequiresCustomer => SelectedPaymentMethod == PaymentMethod.Credit;
 
     public decimal SubTotal => Cart.Sum(c => c.LineTotal);
+
+    public decimal CartDiscountAmount => CartDiscountType == DiscountType.Percentage
+        ? SubTotal * CartDiscountValue / 100m
+        : CartDiscountValue;
+
     public decimal GrandTotal => Math.Max(0, SubTotal - CartDiscountAmount);
     public decimal ChangeDue => SelectedPaymentMethod == PaymentMethod.Cash ? Math.Max(0, AmountReceived - GrandTotal) : 0;
 
@@ -76,12 +91,14 @@ public partial class PosViewModel : ObservableObject
         IProductService productService,
         IProductVariantService productVariantService,
         ICustomerService customerService,
-        Application.Common.CurrentUserContext currentUserContext)
+        IAuthService authService,
+        CurrentUserContext currentUserContext)
     {
         _saleService = saleService;
         _productService = productService;
         _productVariantService = productVariantService;
         _customerService = customerService;
+        _authService = authService;
         _currentUserContext = currentUserContext;
     }
 
@@ -107,10 +124,9 @@ public partial class PosViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(BarcodeInput)) return;
 
         var code = BarcodeInput.Trim();
-        BarcodeInput = string.Empty; // FR-BAR-004: refocus/clear input after every scan
+        BarcodeInput = string.Empty;
 
         var lookup = await _saleService.FindByBarcodeAsync(code);
-
         if (lookup == null)
         {
             SetStatus($"No product found for barcode '{code}'.", true);
@@ -124,11 +140,7 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private async Task SearchAsync()
     {
-        if (string.IsNullOrWhiteSpace(SearchTerm))
-        {
-            SearchResults.Clear();
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(SearchTerm)) { SearchResults.Clear(); return; }
 
         var results = await _productService.SearchAsync(SearchTerm);
         SearchResults.Clear();
@@ -142,18 +154,16 @@ public partial class PosViewModel : ObservableObject
 
         if (product.ProductType == CraftingPOS.Domain.Enums.ProductType.Variable)
         {
-            // Open the variant picker instead of blocking the cashier with an error.
             IsBusy = true;
             try
             {
                 var variants = await _productVariantService.GetByProductIdAsync(product.Id);
-
                 VariantPickerOptions.Clear();
                 foreach (var v in variants) VariantPickerOptions.Add(v);
 
                 if (VariantPickerOptions.Count == 0)
                 {
-                    SetStatus($"'{product.Name}' has no variants configured yet. Add variants from the Products screen first.", true);
+                    SetStatus($"'{product.Name}' has no variants configured yet.", true);
                     return;
                 }
 
@@ -161,11 +171,7 @@ public partial class PosViewModel : ObservableObject
                 IsPickingVariant = true;
                 ClearStatus();
             }
-            finally
-            {
-                IsBusy = false;
-            }
-
+            finally { IsBusy = false; }
             return;
         }
 
@@ -174,7 +180,8 @@ public partial class PosViewModel : ObservableObject
             ProductId = product.Id,
             ProductVariantId = null,
             DisplayName = product.Name,
-            UnitPrice = product.SellingPrice,
+            OriginalUnitPrice = product.SellingPrice,
+            EffectiveUnitPrice = product.EffectiveSellingPrice,
             UnitCost = product.CostPrice,
             AvailableStock = product.CurrentStock
         });
@@ -192,7 +199,8 @@ public partial class PosViewModel : ObservableObject
             ProductId = variant.ProductId,
             ProductVariantId = variant.Id,
             DisplayName = $"{variant.ProductName} — {variant.VariantName}",
-            UnitPrice = variant.SellingPrice,
+            OriginalUnitPrice = variant.SellingPrice,
+            EffectiveUnitPrice = variant.SellingPrice, // variants don't carry product-level discounts in V1
             UnitCost = variant.CostPrice,
             AvailableStock = variant.CurrentStock
         });
@@ -211,9 +219,7 @@ public partial class PosViewModel : ObservableObject
 
     private void AddToCart(CartItemLookupDto lookup)
     {
-        // FR-BAR-003: increase quantity if the item is already in the cart.
-        var existing = Cart.FirstOrDefault(c =>
-            c.ProductId == lookup.ProductId && c.ProductVariantId == lookup.ProductVariantId);
+        var existing = Cart.FirstOrDefault(c => c.ProductId == lookup.ProductId && c.ProductVariantId == lookup.ProductVariantId);
 
         if (existing != null)
         {
@@ -222,7 +228,6 @@ public partial class PosViewModel : ObservableObject
                 SetStatus($"Only {lookup.AvailableStock} unit(s) of '{lookup.DisplayName}' available.", true);
                 return;
             }
-
             existing.Quantity += 1;
         }
         else
@@ -240,8 +245,9 @@ public partial class PosViewModel : ObservableObject
                 DisplayName = lookup.DisplayName,
                 UnitCost = lookup.UnitCost,
                 AvailableStock = lookup.AvailableStock,
+                HasProductDiscount = lookup.EffectiveUnitPrice < lookup.OriginalUnitPrice,
                 Quantity = 1,
-                UnitPrice = lookup.UnitPrice
+                UnitPrice = lookup.EffectiveUnitPrice
             });
         }
 
@@ -252,13 +258,11 @@ public partial class PosViewModel : ObservableObject
     private void IncreaseQuantity(CartLine? line)
     {
         if (line == null) return;
-
         if (line.Quantity + 1 > line.AvailableStock)
         {
             SetStatus($"Only {line.AvailableStock} unit(s) of '{line.DisplayName}' available.", true);
             return;
         }
-
         line.Quantity += 1;
         RefreshTotals();
     }
@@ -267,16 +271,8 @@ public partial class PosViewModel : ObservableObject
     private void DecreaseQuantity(CartLine? line)
     {
         if (line == null) return;
-
-        if (line.Quantity <= 1)
-        {
-            Cart.Remove(line);
-        }
-        else
-        {
-            line.Quantity -= 1;
-        }
-
+        if (line.Quantity <= 1) Cart.Remove(line);
+        else line.Quantity -= 1;
         RefreshTotals();
     }
 
@@ -291,11 +287,13 @@ public partial class PosViewModel : ObservableObject
     private void RefreshTotals()
     {
         OnPropertyChanged(nameof(SubTotal));
+        OnPropertyChanged(nameof(CartDiscountAmount));
         OnPropertyChanged(nameof(GrandTotal));
         OnPropertyChanged(nameof(ChangeDue));
     }
 
-    partial void OnCartDiscountAmountChanged(decimal value) => RefreshTotals();
+    partial void OnCartDiscountTypeChanged(DiscountType value) { RefreshTotals(); _discountOverrideAuthorized = false; ShowOwnerAuthPanel = false; }
+    partial void OnCartDiscountValueChanged(decimal value) { RefreshTotals(); _discountOverrideAuthorized = false; ShowOwnerAuthPanel = false; }
     partial void OnAmountReceivedChanged(decimal value) => OnPropertyChanged(nameof(ChangeDue));
 
     partial void OnSelectedPaymentMethodChanged(PaymentMethod value)
@@ -304,6 +302,35 @@ public partial class PosViewModel : ObservableObject
         OnPropertyChanged(nameof(RequiresReference));
         OnPropertyChanged(nameof(RequiresCustomer));
         OnPropertyChanged(nameof(ChangeDue));
+    }
+
+    [RelayCommand]
+    private async Task AuthorizeOwnerOverrideAsync()
+    {
+        var verified = await _authService.VerifyManagerCredentialsAsync(OwnerAuthUsername, OwnerAuthPassword);
+
+        if (!verified)
+        {
+            OwnerAuthMessage = "Invalid Owner credentials.";
+            return;
+        }
+
+        _discountOverrideAuthorized = true;
+        ShowOwnerAuthPanel = false;
+        OwnerAuthUsername = string.Empty;
+        OwnerAuthPassword = string.Empty;
+        OwnerAuthMessage = string.Empty;
+
+        SetStatus("Owner authorization confirmed. Click Complete Sale again to finish.", false);
+    }
+
+    [RelayCommand]
+    private void CancelOwnerAuth()
+    {
+        ShowOwnerAuthPanel = false;
+        OwnerAuthUsername = string.Empty;
+        OwnerAuthPassword = string.Empty;
+        OwnerAuthMessage = string.Empty;
     }
 
     [RelayCommand]
@@ -330,6 +357,32 @@ public partial class PosViewModel : ObservableObject
             return;
         }
 
+        var belowCostItems = Cart.Where(c => c.UnitPrice < c.UnitCost).ToList();
+        var belowCostConfirmed = false;
+
+        if (belowCostItems.Count > 0)
+        {
+            if (!IsOwner)
+            {
+                SetStatus("A cashier cannot sell a product below its purchase price. Ask an Owner to complete this sale.", true);
+                return;
+            }
+
+            var confirm = System.Windows.MessageBox.Show(
+                $"{belowCostItems.Count} item(s) are priced below their purchase cost. Sell anyway?",
+                "Confirm Below-Cost Sale",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning);
+
+            if (confirm != System.Windows.MessageBoxResult.Yes)
+            {
+                SetStatus("Sale cancelled.", true);
+                return;
+            }
+
+            belowCostConfirmed = true;
+        }
+
         var dto = new CompleteSaleDto
         {
             CustomerId = SelectedCustomer?.Id,
@@ -341,8 +394,10 @@ public partial class PosViewModel : ObservableObject
                 UnitPrice = c.UnitPrice,
                 UnitCost = c.UnitCost
             }).ToList(),
-            CartDiscountAmount = CartDiscountAmount,
-            AllowDiscountOverride = IsOwner,
+            CartDiscountType = CartDiscountType,
+            CartDiscountValue = CartDiscountValue,
+            DiscountOverrideAuthorized = IsOwner || _discountOverrideAuthorized,
+            BelowCostConfirmed = belowCostConfirmed,
             PaymentMethod = SelectedPaymentMethod,
             AmountReceived = IsCashPayment ? AmountReceived : GrandTotal,
             ReferenceNumber = RequiresReference ? ReferenceNumber : null,
@@ -356,7 +411,17 @@ public partial class PosViewModel : ObservableObject
 
             if (!result.Success)
             {
-                SetStatus(result.ErrorMessage ?? "Failed to complete sale.", true);
+                var message = result.ErrorMessage ?? "Failed to complete sale.";
+
+                if (message.StartsWith("OWNER_AUTH_REQUIRED:"))
+                {
+                    ShowOwnerAuthPanel = true;
+                    OwnerAuthMessage = message.Replace("OWNER_AUTH_REQUIRED:", "").Trim();
+                    SetStatus("Owner authorization required for this discount.", true);
+                    return;
+                }
+
+                SetStatus(message, true);
                 return;
             }
 
@@ -385,22 +450,16 @@ public partial class PosViewModel : ObservableObject
         VariantPickerOptions.Clear();
         IsPickingVariant = false;
         SelectedCustomer = null;
-        CartDiscountAmount = 0;
+        CartDiscountType = DiscountType.Flat;
+        CartDiscountValue = 0;
         AmountReceived = 0;
         ReferenceNumber = string.Empty;
         SearchTerm = string.Empty;
+        _discountOverrideAuthorized = false;
+        ShowOwnerAuthPanel = false;
         RefreshTotals();
     }
 
-    private void SetStatus(string message, bool isError)
-    {
-        StatusMessage = message;
-        HasError = isError;
-    }
-
-    private void ClearStatus()
-    {
-        StatusMessage = string.Empty;
-        HasError = false;
-    }
+    private void SetStatus(string message, bool isError) { StatusMessage = message; HasError = isError; }
+    private void ClearStatus() { StatusMessage = string.Empty; HasError = false; }
 }

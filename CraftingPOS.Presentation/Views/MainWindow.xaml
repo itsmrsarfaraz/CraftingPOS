@@ -35,7 +35,6 @@
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 
-		<!-- Top Header -->
 		<Border Grid.Row="0" Grid.ColumnSpan="2" Background="#1E3A8A">
 			<Grid Margin="20,0">
 				<TextBlock Text="CraftingPOS" Foreground="White" FontSize="18" FontWeight="Bold"
@@ -45,7 +44,6 @@
 			</Grid>
 		</Border>
 
-		<!-- Sidebar -->
 		<Border Grid.Row="1" Grid.Column="0" Background="#111827">
 			<StackPanel Margin="0,16,0,0">
 				<Button x:Name="DashboardButton" Content="Dashboard" Style="{StaticResource SidebarButtonStyle}" Click="DashboardButton_Click"/>
@@ -58,11 +56,12 @@
 				<Button x:Name="CustomersButton" Content="Customers" Style="{StaticResource SidebarButtonStyle}" Click="CustomersButton_Click"/>
 				<Button x:Name="SuppliersButton" Content="Suppliers" Style="{StaticResource SidebarButtonStyle}" Click="SuppliersButton_Click"/>
 				<Button x:Name="ReportsButton" Content="Reports" Style="{StaticResource SidebarButtonStyle}" Click="ReportsButton_Click"/>
+				<Button x:Name="BackupButton" Content="Backup" Style="{StaticResource SidebarButtonStyle}" Click="BackupButton_Click"/>
+				<Button x:Name="UsersButton" Content="Users" Style="{StaticResource SidebarButtonStyle}" Click="UsersButton_Click"/>
 				<Button x:Name="SettingsButton" Content="Settings" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
 			</StackPanel>
 		</Border>
 
-		<!-- Main Content -->
 		<ContentControl Grid.Row="1" Grid.Column="1" x:Name="MainContent"/>
 	</Grid>
 </Window>

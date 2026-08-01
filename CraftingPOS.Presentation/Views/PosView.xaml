@@ -200,9 +200,15 @@
 						</Grid>
 
 						<Grid Margin="0,0,0,6">
-							<TextBlock Text="Discount" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-							<TextBox Text="{Binding CartDiscountAmount, UpdateSourceTrigger=PropertyChanged}"
-                                     HorizontalAlignment="Right" Width="120" Padding="4"/>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="90"/>
+								<ColumnDefinition Width="8"/>
+								<ColumnDefinition Width="90"/>
+							</Grid.ColumnDefinitions>
+							<TextBlock Grid.Column="0" Text="Discount" VerticalAlignment="Center"/>
+							<ComboBox Grid.Column="1" ItemsSource="{Binding DiscountTypes}" SelectedItem="{Binding CartDiscountType}" Padding="4"/>
+							<TextBox Grid.Column="3" Text="{Binding CartDiscountValue, UpdateSourceTrigger=PropertyChanged}" Padding="4"/>
 						</Grid>
 
 						<Separator Margin="0,6"/>
@@ -251,6 +257,28 @@
 						<Border Background="#DCFCE7" CornerRadius="6" Padding="10" Margin="0,0,0,12"
                                 Visibility="{Binding HasCompletedSale, Converter={StaticResource BoolToVis}}">
 							<TextBlock Text="{Binding LastReceiptSummary}" TextWrapping="Wrap" FontWeight="Bold" Foreground="#166534"/>
+						</Border>
+
+						<Border Background="#FEF3C7" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+        Visibility="{Binding ShowOwnerAuthPanel, Converter={StaticResource BoolToVis}}">
+							<StackPanel>
+								<TextBlock Text="Owner Authorization Required" FontWeight="Bold" FontSize="13" Foreground="#92400E" Margin="0,0,0,6"/>
+								<TextBlock Text="{Binding OwnerAuthMessage}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+								<TextBox Text="{Binding OwnerAuthUsername, UpdateSourceTrigger=PropertyChanged}"
+										 Tag="Owner Username" Padding="6" Margin="0,0,0,6"/>
+								<PasswordBox x:Name="OwnerAuthPasswordBox" Padding="6" Margin="0,0,0,8"
+											 PasswordChanged="OwnerAuthPasswordBox_PasswordChanged"/>
+
+								<UniformGrid Columns="2" Rows="1">
+									<Button Content="Authorize" Height="30" Margin="0,0,4,0" FontSize="12"
+											Background="#92400E" Foreground="White"
+											Command="{Binding AuthorizeOwnerOverrideCommand}"/>
+									<Button Content="Cancel" Height="30" Margin="4,0,0,0" FontSize="12"
+											Background="#E5E7EB"
+											Command="{Binding CancelOwnerAuthCommand}"/>
+								</UniformGrid>
+							</StackPanel>
 						</Border>
 
 						<Button Content="Complete Sale (F5)" Height="42" FontWeight="Bold" FontSize="15"

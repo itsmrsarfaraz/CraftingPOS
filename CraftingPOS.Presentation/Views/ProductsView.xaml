@@ -150,6 +150,37 @@
 							</StackPanel>
 						</Grid>
 
+						<StackPanel Visibility="{Binding IsOwner, Converter={StaticResource BoolToVis}}" Margin="0,0,0,10">
+							<Separator Margin="0,4,0,10"/>
+							<TextBlock Text="Product Discount (Owner only)" FontWeight="Bold" FontSize="13" Margin="0,0,0,8"/>
+
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="10"/>
+									<ColumnDefinition Width="*"/>
+								</Grid.ColumnDefinitions>
+								<StackPanel Grid.Column="0">
+									<TextBlock Text="Type" Style="{StaticResource FieldLabel}"/>
+									<ComboBox ItemsSource="{Binding DiscountTypes}" SelectedItem="{Binding DiscountType}" Padding="6"/>
+								</StackPanel>
+								<StackPanel Grid.Column="2">
+									<TextBlock Text="Value" Style="{StaticResource FieldLabel}"/>
+									<TextBox Text="{Binding DiscountValue, UpdateSourceTrigger=PropertyChanged}" Padding="6"/>
+								</StackPanel>
+							</Grid>
+
+							<UniformGrid Columns="2" Rows="1" Margin="0,8,0,0">
+								<Button Content="Save Discount" Height="30" FontSize="12" Margin="0,0,6,0"
+										Background="#16A34A" Foreground="White"
+										Command="{Binding SaveDiscountCommand}"/>
+								<Button Content="Remove Discount" Height="30" FontSize="12" Margin="6,0,0,0"
+										Background="#E5E7EB"
+										Visibility="{Binding HasActiveDiscount, Converter={StaticResource BoolToVis}}"
+										Command="{Binding RemoveDiscountCommand}"/>
+							</UniformGrid>
+						</StackPanel>
+
 						<Grid Visibility="{Binding IsVariableProductType, Converter={StaticResource InverseBoolToVis}}">
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="*"/>

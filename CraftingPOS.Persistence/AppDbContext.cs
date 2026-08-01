@@ -25,6 +25,8 @@ public class AppDbContext : DbContext
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<ProductDiscount> ProductDiscounts => Set<ProductDiscount>();
+    public DbSet<DiscountSettings> DiscountSettings => Set<DiscountSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

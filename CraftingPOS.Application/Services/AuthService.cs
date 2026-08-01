@@ -98,6 +98,23 @@ public class AuthService : IAuthService
         return LoginResultDto.Ok(session);
     }
 
+    public async Task<bool> VerifyManagerCredentialsAsync(string username, string password)
+    {
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            return false;
+
+        var user = await _userRepository.GetByUsernameAsync(username.Trim());
+
+        if (user == null || !user.IsActive || user.IsLockedOut)
+            return false;
+
+        if (user.Role.Name != CraftingPOS.Domain.Enums.RoleNames.Owner &&
+            user.Role.Name != CraftingPOS.Domain.Enums.RoleNames.SystemAdmin)
+            return false;
+
+        return _passwordHasher.Verify(password, user.PasswordHash);
+    }
+
     public void Logout()
     {
         if (_currentUserContext.Session != null)

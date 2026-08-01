@@ -1,5 +1,3 @@
-using CraftingPOS.Domain.Enums;
-
 namespace CraftingPOS.Application.DTOs;
 
 public class ProductDto
@@ -7,7 +5,6 @@ public class ProductDto
     public int Id { get; set; }
     public int CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
-
     public int? BrandId { get; set; }
     public string? BrandName { get; set; }
 
@@ -16,7 +13,7 @@ public class ProductDto
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
 
-    public ProductType ProductType { get; set; }
+    public CraftingPOS.Domain.Enums.ProductType ProductType { get; set; }
 
     public decimal CostPrice { get; set; }
     public decimal SellingPrice { get; set; }
@@ -28,6 +25,21 @@ public class ProductDto
 
     public bool IsActive { get; set; }
     public bool IsLowStock => CurrentStock <= MinimumStock;
+
+    public CraftingPOS.Domain.Enums.DiscountType? DiscountType { get; set; }
+    public decimal? DiscountValue { get; set; }
+
+    public decimal EffectiveSellingPrice
+    {
+        get
+        {
+            if (DiscountType == CraftingPOS.Domain.Enums.DiscountType.Percentage)
+                return Math.Max(0, SellingPrice - (SellingPrice * (DiscountValue ?? 0) / 100m));
+            if (DiscountType == CraftingPOS.Domain.Enums.DiscountType.Flat)
+                return Math.Max(0, SellingPrice - (DiscountValue ?? 0));
+            return SellingPrice;
+        }
+    }
 }
 
 public class SaveProductDto
@@ -39,7 +51,7 @@ public class SaveProductDto
     public string SKU { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public ProductType ProductType { get; set; } = ProductType.Standard;
+    public CraftingPOS.Domain.Enums.ProductType ProductType { get; set; } = CraftingPOS.Domain.Enums.ProductType.Standard;
 
     public decimal CostPrice { get; set; }
     public decimal SellingPrice { get; set; }

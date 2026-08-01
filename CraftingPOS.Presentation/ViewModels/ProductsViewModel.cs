@@ -58,6 +58,14 @@ public partial class ProductsViewModel : ObservableObject
     [ObservableProperty] private string variantFormHeader = "New Variant";
     [ObservableProperty] private string variantStatusMessage = string.Empty;
     [ObservableProperty] private bool variantHasError;
+    private readonly IProductDiscountService _productDiscountService;
+
+    [ObservableProperty] private CraftingPOS.Domain.Enums.DiscountType discountType = CraftingPOS.Domain.Enums.DiscountType.Percentage;
+    [ObservableProperty] private decimal discountValue;
+    [ObservableProperty] private bool hasActiveDiscount;
+
+    public List<CraftingPOS.Domain.Enums.DiscountType> DiscountTypes { get; } =
+        Enum.GetValues<CraftingPOS.Domain.Enums.DiscountType>().ToList();
 
     public bool IsOwner => _currentUserContext.Session?.RoleName == RoleNames.Owner;
     public bool IsVariableProductType => FormProductType == ProductType.Variable;
@@ -123,13 +131,18 @@ public partial class ProductsViewModel : ObservableObject
         }
     }
 
-    partial void OnSelectedProductChanged(ProductDto? value)
+    partial async void OnSelectedProductChanged(ProductDto? value)
     {
         if (value == null)
         {
             NewProduct();
             return;
         }
+
+        var discount = await _productDiscountService.GetForProductAsync(value.Id);
+        HasActiveDiscount = discount.DiscountType.HasValue;
+        DiscountType = discount.DiscountType ?? CraftingPOS.Domain.Enums.DiscountType.Percentage;
+        DiscountValue = discount.DiscountValue ?? 0;
 
         FormCategory = Categories.FirstOrDefault(c => c.Id == value.CategoryId);
         FormBrand = value.BrandId.HasValue ? Brands.FirstOrDefault(b => b.Id == value.BrandId.Value) : null;
@@ -191,6 +204,36 @@ public partial class ProductsViewModel : ObservableObject
         FormHeader = "New Product";
         ClearStatus();
         NewVariant();
+    }
+
+    [RelayCommand]
+    private async Task SaveDiscountAsync()
+    {
+        if (FormId <= 0)
+        {
+            SetStatus("Save the product first before setting a discount.", true);
+            return;
+        }
+
+        var result = await _productDiscountService.SetDiscountAsync(new SaveProductDiscountDto
+        {
+            ProductId = FormId,
+            DiscountType = DiscountType,
+            DiscountValue = DiscountValue
+        });
+
+        SetStatus(result.Success ? "Discount saved." : result.ErrorMessage ?? "Failed to save discount.", !result.Success);
+        if (result.Success) HasActiveDiscount = true;
+    }
+
+    [RelayCommand]
+    private async Task RemoveDiscountAsync()
+    {
+        if (FormId <= 0) return;
+
+        var result = await _productDiscountService.RemoveDiscountAsync(FormId);
+        SetStatus(result.Success ? "Discount removed." : result.ErrorMessage ?? "Failed to remove discount.", !result.Success);
+        if (result.Success) { HasActiveDiscount = false; DiscountValue = 0; }
     }
 
     [RelayCommand]

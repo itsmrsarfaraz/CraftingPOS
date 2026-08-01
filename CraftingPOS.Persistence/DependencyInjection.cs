@@ -3,6 +3,7 @@ using CraftingPOS.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using CraftingPOS.Application.Interfaces;
 
 namespace CraftingPOS.Persistence;
 
@@ -28,6 +29,9 @@ public static class DependencyInjection
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<ICustomerLedgerRepository, CustomerLedgerRepository>();
         services.AddScoped<ISaleRepository, SaleRepository>();
+        services.AddScoped<IBackupService, Services.BackupService>();
+        services.AddScoped<IProductDiscountRepository, ProductDiscountRepository>();
+        services.AddScoped<IDiscountSettingsRepository, DiscountSettingsRepository>();
 
         return services;
     }
