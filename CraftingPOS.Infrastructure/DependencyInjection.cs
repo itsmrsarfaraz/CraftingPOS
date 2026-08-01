@@ -1,4 +1,5 @@
 using CraftingPOS.Application.Interfaces;
+using CraftingPOS.Infrastructure.Barcode;
 using CraftingPOS.Infrastructure.Security;
 using CraftingPOS.Infrastructure.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ public static class DependencyInjection
     {
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddSingleton<IImageStorageService, LocalImageStorageService>();
+        services.AddSingleton<IBarcodeService, ZXingBarcodeService>();
 
         return services;
     }

@@ -10,17 +10,20 @@ public class DashboardService : IDashboardService
     private readonly ISupplierService _supplierService;
     private readonly ICustomerService _customerService;
     private readonly IInventoryService _inventoryService;
+    private readonly ISaleService _saleService;
 
     public DashboardService(
         IProductService productService,
         ISupplierService supplierService,
         ICustomerService customerService,
-        IInventoryService inventoryService)
+        IInventoryService inventoryService,
+        ISaleService saleService)
     {
         _productService = productService;
         _supplierService = supplierService;
         _customerService = customerService;
         _inventoryService = inventoryService;
+        _saleService = saleService;
     }
 
     public async Task<DashboardSummaryDto> GetSummaryAsync()
@@ -29,21 +32,14 @@ public class DashboardService : IDashboardService
 
         try
         {
-            // TODO (Sprint 10 - Sales): replace with real SUM(GrandTotal) for today
-            summary.TodaysSales = 0m;
-
-            // TODO (Sprint 10 - Sales): replace with real profit calculation for today
-            summary.TodaysProfit = 0m;
-
+            // Sprint 10: all remaining TODOs resolved.
+            summary.TodaysSales = await _saleService.GetTodaysSalesTotalAsync();
+            summary.TodaysProfit = await _saleService.GetTodaysProfitTotalAsync();
             summary.TotalProducts = await _productService.CountAsync();
             summary.TotalCustomers = await _customerService.CountAsync();
             summary.TotalSuppliers = await _supplierService.CountAsync();
-
-            // Sprint 9: real low-stock query
             summary.LowStockItems = await _inventoryService.GetLowStockForDashboardAsync();
-
-            // TODO (Sprint 10 - Sales): replace with real recent sales query
-            summary.RecentSales = new List<RecentSaleDto>();
+            summary.RecentSales = await _saleService.GetRecentSalesAsync();
 
             summary.GeneratedAt = DateTime.Now;
         }

@@ -23,7 +23,16 @@ public class ProductVariantRepository : IProductVariantRepository
 
     public async Task<ProductVariant?> GetByIdAsync(int id)
     {
-        return await _context.ProductVariants.FirstOrDefaultAsync(v => v.Id == id);
+        return await _context.ProductVariants
+            .Include(v => v.Product)
+            .FirstOrDefaultAsync(v => v.Id == id);
+    }
+
+    public async Task<ProductVariant?> GetByBarcodeAsync(string barcode)
+    {
+        return await _context.ProductVariants
+            .Include(v => v.Product)
+            .FirstOrDefaultAsync(v => v.Barcode == barcode);
     }
 
     public async Task<bool> BarcodeExistsAsync(string barcode, int? excludeId = null)

@@ -45,9 +45,6 @@ public class ProductVariantService : IProductVariantService
 
         var excludeId = dto.Id > 0 ? dto.Id : (int?)null;
 
-        // BR-BAR-001 / BR-PROD-001: barcode must be globally unique across
-        // standard Products AND ProductVariants — a variant cannot reuse
-        // a barcode already assigned anywhere else in the catalog.
         if (await _productRepository.BarcodeExistsAsync(dto.Barcode.Trim())
             || await _variantRepository.BarcodeExistsAsync(dto.Barcode.Trim(), excludeId))
         {
@@ -132,6 +129,7 @@ public class ProductVariantService : IProductVariantService
         {
             Id = v.Id,
             ProductId = v.ProductId,
+            ProductName = v.Product?.Name ?? string.Empty,
             VariantName = v.VariantName,
             Barcode = v.Barcode,
             SKU = v.SKU,

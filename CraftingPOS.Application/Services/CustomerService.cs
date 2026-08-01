@@ -11,15 +11,18 @@ public class CustomerService : ICustomerService
 {
     private readonly ICustomerRepository _customerRepository;
     private readonly ICustomerLedgerService _customerLedgerService;
+    private readonly ISaleService _saleService;
     private readonly CurrentUserContext _currentUserContext;
 
     public CustomerService(
         ICustomerRepository customerRepository,
         ICustomerLedgerService customerLedgerService,
+        ISaleService saleService,
         CurrentUserContext currentUserContext)
     {
         _customerRepository = customerRepository;
         _customerLedgerService = customerLedgerService;
+        _saleService = saleService;
         _currentUserContext = currentUserContext;
     }
 
@@ -148,10 +151,10 @@ public class CustomerService : ICustomerService
         return OperationResult.Ok();
     }
 
-    public Task<List<SalesHistoryItemDto>> GetSalesHistoryAsync(int customerId)
+    public async Task<List<SalesHistoryItemDto>> GetSalesHistoryAsync(int customerId)
     {
-        // TODO (Sprint 10 - Sales): replace with a real query against Sales.
-        return Task.FromResult(new List<SalesHistoryItemDto>());
+        // Sprint 10: real implementation, replacing the Sprint 7 placeholder.
+        return await _saleService.GetSalesHistoryForCustomerAsync(customerId);
     }
 
     private static CustomerDto MapToDto(Customer c)

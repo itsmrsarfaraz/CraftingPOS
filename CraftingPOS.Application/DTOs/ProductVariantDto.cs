@@ -4,6 +4,7 @@ public class ProductVariantDto
 {
     public int Id { get; set; }
     public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
     public string VariantName { get; set; } = string.Empty;
     public string Barcode { get; set; } = string.Empty;
     public string SKU { get; set; } = string.Empty;
@@ -16,7 +17,7 @@ public class ProductVariantDto
 
 public class SaveProductVariantDto
 {
-    public int Id { get; set; } // 0 = create
+    public int Id { get; set; }
     public int ProductId { get; set; }
     public string VariantName { get; set; } = string.Empty;
     public string Barcode { get; set; } = string.Empty;

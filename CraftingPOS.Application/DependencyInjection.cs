@@ -18,9 +18,10 @@ public static class DependencyInjection
         services.AddScoped<ISupplierService, SupplierService>();
         services.AddScoped<IPurchaseService, PurchaseService>();
         services.AddScoped<ICustomerLedgerService, CustomerLedgerService>();
+        services.AddScoped<ISaleService, SaleService>();
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IInventoryService, InventoryService>();
-        services.AddScoped<IDashboardService, DashboardService>(); // registered after IInventoryService, which it depends on
+        services.AddScoped<IDashboardService, DashboardService>();
 
         return services;
     }

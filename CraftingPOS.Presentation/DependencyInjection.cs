@@ -17,6 +17,9 @@ public static class DependencyInjection
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<DashboardView>();
 
+        services.AddTransient<PosViewModel>();
+        services.AddTransient<PosView>();
+
         services.AddTransient<CategoriesViewModel>();
         services.AddTransient<CategoriesView>();
 
@@ -25,6 +28,7 @@ public static class DependencyInjection
 
         services.AddTransient<ProductsViewModel>();
         services.AddTransient<ProductsView>();
+        services.AddTransient<BarcodeLabelWindow>();
 
         services.AddTransient<InventoryViewModel>();
         services.AddTransient<InventoryView>();

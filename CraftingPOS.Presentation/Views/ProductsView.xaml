@@ -77,14 +77,20 @@
 						<DataGridTextColumn Header="Stock" Binding="{Binding CurrentStock}" Width="Auto"/>
 						<DataGridTextColumn Header="Cost" Binding="{Binding CostPrice, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
 						<DataGridTextColumn Header="Price" Binding="{Binding SellingPrice, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
-						<DataGridTemplateColumn Header="" Width="100">
+						<DataGridTemplateColumn Header="" Width="170">
 							<DataGridTemplateColumn.CellTemplate>
 								<DataTemplate>
-									<Button Content="Deactivate"
-                                            FontSize="11" Padding="6,2"
-                                            Background="#FEE2E2" Foreground="#B91C1C" BorderThickness="0"
-                                            Command="{Binding DataContext.DeactivateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"/>
+									<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+										<Button Content="Label" FontSize="11" Padding="6,2" Margin="0,0,6,0"
+												Background="#DBEAFE" Foreground="#1E3A8A" BorderThickness="0"
+												Command="{Binding DataContext.PrintLabelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+												CommandParameter="{Binding}"/>
+										<Button Content="Deactivate"
+												FontSize="11" Padding="6,2"
+												Background="#FEE2E2" Foreground="#B91C1C" BorderThickness="0"
+												Command="{Binding DataContext.DeactivateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+												CommandParameter="{Binding}"/>
+									</StackPanel>
 								</DataTemplate>
 							</DataGridTemplateColumn.CellTemplate>
 						</DataGridTemplateColumn>

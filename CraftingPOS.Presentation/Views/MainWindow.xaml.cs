@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     }
 
     private void DashboardButton_Click(object sender, RoutedEventArgs e) => ShowDashboard();
+    private void SalesButton_Click(object sender, RoutedEventArgs e) => ShowSales();
     private void CategoriesButton_Click(object sender, RoutedEventArgs e) => ShowCategories();
     private void BrandsButton_Click(object sender, RoutedEventArgs e) => ShowBrands();
     private void ProductsButton_Click(object sender, RoutedEventArgs e) => ShowProducts();
@@ -24,6 +25,7 @@ public partial class MainWindow : Window
     private void CustomersButton_Click(object sender, RoutedEventArgs e) => ShowCustomers();
 
     private void ShowDashboard() => MainContent.Content = App.AppHost.Services.GetRequiredService<DashboardView>();
+    private void ShowSales() => MainContent.Content = App.AppHost.Services.GetRequiredService<PosView>();
     private void ShowCategories() => MainContent.Content = App.AppHost.Services.GetRequiredService<CategoriesView>();
     private void ShowBrands() => MainContent.Content = App.AppHost.Services.GetRequiredService<BrandsView>();
     private void ShowProducts() => MainContent.Content = App.AppHost.Services.GetRequiredService<ProductsView>();

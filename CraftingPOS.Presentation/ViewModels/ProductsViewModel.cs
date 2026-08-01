@@ -295,6 +295,15 @@ public partial class ProductsViewModel : ObservableObject
         }
     }
 
+    public event Action<ProductDto>? PrintLabelRequested;
+
+    [RelayCommand]
+    private void PrintLabel(ProductDto? product)
+    {
+        if (product == null) return;
+        PrintLabelRequested?.Invoke(product);
+    }
+
     private async Task LoadVariantsAsync(int productId)
     {
         try
