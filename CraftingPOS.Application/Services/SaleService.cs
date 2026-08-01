@@ -294,6 +294,39 @@ public class SaleService : Interfaces.ISaleService
             .ToList();
     }
 
+    public async Task<ReceiptDto?> GetReceiptAsync(int saleId)
+    {
+        var sale = await _saleRepository.GetByIdAsync(saleId);
+        if (sale == null) return null;
+
+        var payment = sale.Payments.FirstOrDefault();
+
+        return new ReceiptDto
+        {
+            InvoiceNumber = sale.InvoiceNumber,
+            SaleDate = sale.SaleDate,
+            CashierName = sale.Cashier?.FullName ?? string.Empty,
+            CustomerName = sale.Customer?.Name,
+            Items = sale.Items.Select(i => new ReceiptLineDto
+            {
+                ProductName = i.ProductVariant != null
+                    ? $"{i.Product?.Name} — {i.ProductVariant.VariantName}"
+                    : i.Product?.Name ?? string.Empty,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                LineTotal = i.LineTotal
+            }).ToList(),
+            SubTotal = sale.SubTotal,
+            Discount = sale.CartDiscount + sale.ProductDiscount,
+            GrandTotal = sale.GrandTotal,
+            PaymentMethod = payment?.PaymentMethod.ToString() ?? sale.PaymentStatus.ToString(),
+            AmountReceived = payment?.Amount,
+            ChangeDue = payment != null && payment.Amount > sale.GrandTotal
+                ? payment.Amount - sale.GrandTotal
+                : null
+        };
+    }
+
     private async Task LogInventoryTransactionAsync(
         int productId, int? variantId, InventoryTransactionType type,
         decimal signedQuantity, decimal stockBefore, decimal stockAfter,

@@ -26,6 +26,11 @@ public class SaleRepository : ISaleRepository
         return await BaseQuery().ToListAsync();
     }
 
+    public async Task<Sale?> GetByIdAsync(int id)
+    {
+        return await BaseQuery().FirstOrDefaultAsync(s => s.Id == id);
+    }
+
     public async Task<List<Sale>> GetTodaysSalesAsync()
     {
         var todayUtcStart = DateTime.UtcNow.Date;

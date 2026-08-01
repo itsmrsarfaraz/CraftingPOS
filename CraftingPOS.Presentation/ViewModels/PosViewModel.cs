@@ -34,6 +34,8 @@ public partial class PosViewModel : ObservableObject
     private readonly ICustomerService _customerService;
     private readonly Application.Common.CurrentUserContext _currentUserContext;
 
+    public event Action<int>? SaleCompleted; // <-- Add it here in PosViewModel
+
     public ObservableCollection<CartLine> Cart { get; } = new();
     public ObservableCollection<ProductDto> SearchResults { get; } = new();
     public ObservableCollection<CustomerDto> Customers { get; } = new();
@@ -308,7 +310,7 @@ public partial class PosViewModel : ObservableObject
 
             HasCompletedSale = true;
             SetStatus("Sale completed successfully.", false);
-
+            SaleCompleted?.Invoke(sale.SaleId);
             ResetCartForNextSale();
         }
         finally

@@ -1,5 +1,7 @@
 using CraftingPOS.Presentation.ViewModels;
 using CraftingPOS.Presentation.Views;
+using CraftingPOS.Application.Interfaces;
+using CraftingPOS.Presentation.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CraftingPOS.Presentation;
@@ -19,6 +21,9 @@ public static class DependencyInjection
 
         services.AddTransient<PosViewModel>();
         services.AddTransient<PosView>();
+        services.AddSingleton<IReceiptPrinterService, ReceiptPrinterService>();
+        services.AddTransient<ReceiptPreviewViewModel>();
+        services.AddTransient<ReceiptPreviewWindow>();
 
         services.AddTransient<CategoriesViewModel>();
         services.AddTransient<CategoriesView>();
