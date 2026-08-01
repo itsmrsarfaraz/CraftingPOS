@@ -5,227 +5,265 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-    <UserControl.Resources>
-        <Style x:Key="PanelStyle" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="BorderBrush" Value="#E5E7EB"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="16"/>
-        </Style>
-        <Style x:Key="FieldLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="Gray"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
-        </Style>
-    </UserControl.Resources>
+	<UserControl.Resources>
+		<Style x:Key="PanelStyle" TargetType="Border">
+			<Setter Property="Background" Value="White"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#E5E7EB"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="Padding" Value="16"/>
+		</Style>
+		<Style x:Key="FieldLabel" TargetType="TextBlock">
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="Foreground" Value="Gray"/>
+			<Setter Property="Margin" Value="0,0,0,4"/>
+		</Style>
+	</UserControl.Resources>
 
-    <Grid Background="#F3F4F6">
-        <Grid Margin="20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="1*" MinWidth="360"/>
-            </Grid.ColumnDefinitions>
+	<Grid Background="#F3F4F6">
+		<Grid Margin="20">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="2*"/>
+				<ColumnDefinition Width="16"/>
+				<ColumnDefinition Width="1*" MinWidth="360"/>
+			</Grid.ColumnDefinitions>
 
-            <!-- LEFT: Barcode + Search + Cart -->
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="12"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="12"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+			<!-- LEFT: Barcode + Search + Cart -->
+			<Grid Grid.Column="0">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto"/>
+					<RowDefinition Height="12"/>
+					<RowDefinition Height="Auto"/>
+					<RowDefinition Height="12"/>
+					<RowDefinition Height="*"/>
+				</Grid.RowDefinitions>
 
-                <!-- Barcode input, always focused -->
-                <Border Grid.Row="0" Style="{StaticResource PanelStyle}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="100"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="BarcodeBox" Grid.Column="0"
+				<!-- Barcode input, always focused -->
+				<Border Grid.Row="0" Style="{StaticResource PanelStyle}">
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*"/>
+							<ColumnDefinition Width="100"/>
+						</Grid.ColumnDefinitions>
+						<TextBox x:Name="BarcodeBox" Grid.Column="0"
                                  Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
                                  Padding="10" FontSize="16"
                                  KeyDown="BarcodeBox_KeyDown"/>
-                        <Button Grid.Column="1" Content="Scan / Enter" Margin="8,0,0,0"
+						<Button Grid.Column="1" Content="Scan / Enter" Margin="8,0,0,0"
                                 Background="#1E3A8A" Foreground="White"
                                 Command="{Binding ScanBarcodeCommand}"/>
-                    </Grid>
-                </Border>
+					</Grid>
+				</Border>
 
-                <!-- Product search -->
-                <Border Grid.Row="2" Style="{StaticResource PanelStyle}">
-                    <StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="90"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
+				<!-- Product search -->
+				<Border Grid.Row="2" Style="{StaticResource PanelStyle}">
+					<StackPanel>
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="90"/>
+							</Grid.ColumnDefinitions>
+							<TextBox Grid.Column="0" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
                                      Padding="8" FontSize="13"/>
-                            <Button Grid.Column="1" Content="Search" Margin="8,0,0,0"
+							<Button Grid.Column="1" Content="Search" Margin="8,0,0,0"
                                     Background="#E5E7EB"
                                     Command="{Binding SearchCommand}"/>
-                        </Grid>
+						</Grid>
 
-                        <ItemsControl ItemsSource="{Binding SearchResults}" Margin="0,10,0,0">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button Margin="0,0,8,8" Padding="10,6"
+						<ItemsControl ItemsSource="{Binding SearchResults}" Margin="0,10,0,0">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel/>
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate>
+									<Button Margin="0,0,8,8" Padding="10,6"
                                             Background="#DBEAFE" Foreground="#1E3A8A" BorderThickness="0"
                                             Command="{Binding DataContext.AddSearchResultToCartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12"/>
-                                            <TextBlock Text="{Binding SellingPrice, StringFormat='Rs. {0:N0}'}" FontSize="11"/>
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
+										<StackPanel>
+											<TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12"/>
+											<TextBlock Text="{Binding SellingPrice, StringFormat='Rs. {0:N0}'}" FontSize="11"/>
+										</StackPanel>
+									</Button>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
 
-                <!-- Cart Grid -->
-                <Border Grid.Row="4" Style="{StaticResource PanelStyle}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+						<!-- Variant Picker Panel -->
+						<StackPanel Visibility="{Binding IsPickingVariant, Converter={StaticResource BoolToVis}}" Margin="0,12,0,0">
+							<Grid Margin="0,0,0,8">
+								<TextBlock Text="{Binding VariantPickerHeader}" FontWeight="Bold" FontSize="13"/>
+								<Button Content="✕ Cancel" HorizontalAlignment="Right"
+                                        FontSize="11" Padding="6,2" Background="Transparent" BorderThickness="0"
+                                        Command="{Binding CancelVariantPickerCommand}"/>
+							</Grid>
 
-                        <TextBlock Grid.Row="0" Text="Cart" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+							<ItemsControl ItemsSource="{Binding VariantPickerOptions}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<WrapPanel/>
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate>
+										<Button Margin="0,0,8,8" Padding="10,6"
+                                                Background="#FEF3C7" Foreground="#92400E" BorderThickness="0"
+                                                Command="{Binding DataContext.SelectVariantForCartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}">
+											<StackPanel>
+												<TextBlock Text="{Binding VariantName}" FontWeight="Bold" FontSize="12"/>
+												<TextBlock FontSize="11">
+													<TextBlock.Text>
+														<MultiBinding StringFormat="Rs. {0:N0} — Stock: {1}">
+															<Binding Path="SellingPrice"/>
+															<Binding Path="CurrentStock"/>
+														</MultiBinding>
+													</TextBlock.Text>
+												</TextBlock>
+											</StackPanel>
+										</Button>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</StackPanel>
+				</Border>
 
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding Cart}"
+				<!-- Cart Grid -->
+				<Border Grid.Row="4" Style="{StaticResource PanelStyle}">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto"/>
+							<RowDefinition Height="*"/>
+						</Grid.RowDefinitions>
+
+						<TextBlock Grid.Row="0" Text="Cart" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+
+						<DataGrid Grid.Row="1" ItemsSource="{Binding Cart}"
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
                                   GridLinesVisibility="Horizontal"
                                   HeadersVisibility="Column"
                                   RowHeight="36"
                                   CanUserAddRows="False">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Product" Binding="{Binding DisplayName}" Width="*"/>
-                                <DataGridTextColumn Header="Unit Price" Binding="{Binding UnitPrice, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
-                                <DataGridTemplateColumn Header="Qty" Width="140">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button Content="−" Width="26" Padding="0"
+							<DataGrid.Columns>
+								<DataGridTextColumn Header="Product" Binding="{Binding DisplayName}" Width="*"/>
+								<DataGridTextColumn Header="Unit Price" Binding="{Binding UnitPrice, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
+								<DataGridTemplateColumn Header="Qty" Width="140">
+									<DataGridTemplateColumn.CellTemplate>
+										<DataTemplate>
+											<StackPanel Orientation="Horizontal">
+												<Button Content="−" Width="26" Padding="0"
                                                         Command="{Binding DataContext.DecreaseQuantityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}"/>
-                                                <TextBlock Text="{Binding Quantity}" Width="36" TextAlignment="Center" VerticalAlignment="Center"/>
-                                                <Button Content="+" Width="26" Padding="0"
+												<TextBlock Text="{Binding Quantity}" Width="36" TextAlignment="Center" VerticalAlignment="Center"/>
+												<Button Content="+" Width="26" Padding="0"
                                                         Command="{Binding DataContext.IncreaseQuantityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Line Total" Binding="{Binding LineTotal, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
-                                <DataGridTemplateColumn Header="" Width="70">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Content="Remove" FontSize="10" Padding="4,1"
+											</StackPanel>
+										</DataTemplate>
+									</DataGridTemplateColumn.CellTemplate>
+								</DataGridTemplateColumn>
+								<DataGridTextColumn Header="Line Total" Binding="{Binding LineTotal, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
+								<DataGridTemplateColumn Header="" Width="70">
+									<DataGridTemplateColumn.CellTemplate>
+										<DataTemplate>
+											<Button Content="Remove" FontSize="10" Padding="4,1"
                                                     Background="#FEE2E2" Foreground="#B91C1C" BorderThickness="0"
                                                     Command="{Binding DataContext.RemoveFromCartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Grid>
-                </Border>
-            </Grid>
+										</DataTemplate>
+									</DataGridTemplateColumn.CellTemplate>
+								</DataGridTemplateColumn>
+							</DataGrid.Columns>
+						</DataGrid>
+					</Grid>
+				</Border>
+			</Grid>
 
-            <!-- RIGHT: Totals + Checkout -->
-            <Border Grid.Column="2" Style="{StaticResource PanelStyle}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <TextBlock Text="Checkout" FontSize="18" FontWeight="Bold" Foreground="#1E3A8A" Margin="0,0,0,14"/>
+			<!-- RIGHT: Totals + Checkout -->
+			<Border Grid.Column="2" Style="{StaticResource PanelStyle}">
+				<ScrollViewer VerticalScrollBarVisibility="Auto">
+					<StackPanel>
+						<TextBlock Text="Checkout" FontSize="18" FontWeight="Bold" Foreground="#1E3A8A" Margin="0,0,0,14"/>
 
-                        <TextBlock Text="Customer (required for Credit)" Style="{StaticResource FieldLabel}"/>
-                        <ComboBox ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer}"
+						<TextBlock Text="Customer (required for Credit)" Style="{StaticResource FieldLabel}"/>
+						<ComboBox ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer}"
                                   DisplayMemberPath="Name" Padding="6" Margin="0,0,0,12"/>
 
-                        <!-- Totals -->
-                        <Grid Margin="0,0,0,6">
-                            <TextBlock Text="Subtotal" HorizontalAlignment="Left"/>
-                            <TextBlock Text="{Binding SubTotal, StringFormat='Rs. {0:N0}'}" HorizontalAlignment="Right" FontWeight="Bold"/>
-                        </Grid>
+						<!-- Totals -->
+						<Grid Margin="0,0,0,6">
+							<TextBlock Text="Subtotal" HorizontalAlignment="Left"/>
+							<TextBlock Text="{Binding SubTotal, StringFormat='Rs. {0:N0}'}" HorizontalAlignment="Right" FontWeight="Bold"/>
+						</Grid>
 
-                        <Grid Margin="0,0,0,6">
-                            <TextBlock Text="Discount" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                            <TextBox Text="{Binding CartDiscountAmount, UpdateSourceTrigger=PropertyChanged}"
+						<Grid Margin="0,0,0,6">
+							<TextBlock Text="Discount" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+							<TextBox Text="{Binding CartDiscountAmount, UpdateSourceTrigger=PropertyChanged}"
                                      HorizontalAlignment="Right" Width="120" Padding="4"/>
-                        </Grid>
+						</Grid>
 
-                        <Separator Margin="0,6"/>
+						<Separator Margin="0,6"/>
 
-                        <Grid Margin="0,0,0,16">
-                            <TextBlock Text="Grand Total" HorizontalAlignment="Left" FontWeight="Bold" FontSize="18"/>
-                            <TextBlock Text="{Binding GrandTotal, StringFormat='Rs. {0:N0}'}"
+						<Grid Margin="0,0,0,16">
+							<TextBlock Text="Grand Total" HorizontalAlignment="Left" FontWeight="Bold" FontSize="18"/>
+							<TextBlock Text="{Binding GrandTotal, StringFormat='Rs. {0:N0}'}"
                                        HorizontalAlignment="Right" FontWeight="Bold" FontSize="18" Foreground="#1E3A8A"/>
-                        </Grid>
+						</Grid>
 
-                        <TextBlock Text="Payment Method" Style="{StaticResource FieldLabel}"/>
-                        <ComboBox ItemsSource="{Binding PaymentMethods}" SelectedItem="{Binding SelectedPaymentMethod}"
+						<TextBlock Text="Payment Method" Style="{StaticResource FieldLabel}"/>
+						<ComboBox ItemsSource="{Binding PaymentMethods}" SelectedItem="{Binding SelectedPaymentMethod}"
                                   Padding="6" Margin="0,0,0,12"/>
 
-                        <!-- Cash fields -->
-                        <StackPanel Visibility="{Binding IsCashPayment, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="Amount Received *" Style="{StaticResource FieldLabel}"/>
-                            <TextBox Text="{Binding AmountReceived, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,0,0,10"/>
+						<!-- Cash fields -->
+						<StackPanel Visibility="{Binding IsCashPayment, Converter={StaticResource BoolToVis}}">
+							<TextBlock Text="Amount Received *" Style="{StaticResource FieldLabel}"/>
+							<TextBox Text="{Binding AmountReceived, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,0,0,10"/>
 
-                            <Grid Margin="0,0,0,16">
-                                <TextBlock Text="Change Due" HorizontalAlignment="Left" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding ChangeDue, StringFormat='Rs. {0:N0}'}"
+							<Grid Margin="0,0,0,16">
+								<TextBlock Text="Change Due" HorizontalAlignment="Left" FontWeight="Bold"/>
+								<TextBlock Text="{Binding ChangeDue, StringFormat='Rs. {0:N0}'}"
                                            HorizontalAlignment="Right" FontWeight="Bold" Foreground="#16A34A"/>
-                            </Grid>
-                        </StackPanel>
+							</Grid>
+						</StackPanel>
 
-                        <!-- Card / Bank Transfer reference -->
-                        <StackPanel Visibility="{Binding RequiresReference, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="Reference Number" Style="{StaticResource FieldLabel}"/>
-                            <TextBox Text="{Binding ReferenceNumber, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,0,0,12"/>
-                        </StackPanel>
+						<!-- Card / Bank Transfer reference -->
+						<StackPanel Visibility="{Binding RequiresReference, Converter={StaticResource BoolToVis}}">
+							<TextBlock Text="Reference Number" Style="{StaticResource FieldLabel}"/>
+							<TextBox Text="{Binding ReferenceNumber, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,0,0,12"/>
+						</StackPanel>
 
-                        <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="12" Margin="0,4,0,12">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#16A34A"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasError}" Value="True">
-                                            <Setter Property="Foreground" Value="#DC2626"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+						<TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="12" Margin="0,4,0,12">
+							<TextBlock.Style>
+								<Style TargetType="TextBlock">
+									<Setter Property="Foreground" Value="#16A34A"/>
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding HasError}" Value="True">
+											<Setter Property="Foreground" Value="#DC2626"/>
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</TextBlock.Style>
+						</TextBlock>
 
-                        <Border Background="#DCFCE7" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+						<Border Background="#DCFCE7" CornerRadius="6" Padding="10" Margin="0,0,0,12"
                                 Visibility="{Binding HasCompletedSale, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="{Binding LastReceiptSummary}" TextWrapping="Wrap" FontWeight="Bold" Foreground="#166534"/>
-                        </Border>
+							<TextBlock Text="{Binding LastReceiptSummary}" TextWrapping="Wrap" FontWeight="Bold" Foreground="#166534"/>
+						</Border>
 
-                        <Button Content="Complete Sale (F5)" Height="42" FontWeight="Bold" FontSize="15"
+						<Button Content="Complete Sale (F5)" Height="42" FontWeight="Bold" FontSize="15"
                                 Background="#16A34A" Foreground="White"
                                 Command="{Binding CompleteSaleCommand}"/>
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
-        </Grid>
+					</StackPanel>
+				</ScrollViewer>
+			</Border>
+		</Grid>
 
-        <Border Background="#AAFFFFFF"
+		<Border Background="#AAFFFFFF"
                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="Working..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
-        </Border>
-    </Grid>
+			<TextBlock Text="Working..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+		</Border>
+	</Grid>
 </UserControl>

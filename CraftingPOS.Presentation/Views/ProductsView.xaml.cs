@@ -21,7 +21,14 @@ public partial class ProductsView : UserControl
     private void OnPrintLabelRequested(Application.DTOs.ProductDto product)
     {
         var window = App.AppHost.Services.GetRequiredService<BarcodeLabelWindow>();
-        window.Owner = System.Windows.Application.Current.MainWindow;
+        var owner = App.AppHost.Services.GetRequiredService<MainWindow>();
+
+        // Only set Owner if this isn't somehow the same window and the owner is visible.
+        if (!ReferenceEquals(window, owner) && owner.IsVisible)
+        {
+            window.Owner = owner;
+        }
+
         window.LoadLabel(product.Name, product.Barcode, product.SellingPrice);
         window.Show();
     }

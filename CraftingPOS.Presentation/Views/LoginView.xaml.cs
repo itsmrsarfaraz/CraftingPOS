@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Input;
 using CraftingPOS.Presentation.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,9 +24,9 @@ public partial class LoginView : Window
         await _viewModel.AttemptLoginAsync(PasswordBox.Password);
     }
 
-    private async void PasswordBox_KeyDown(object sender, KeyEventArgs e)
+    private async void PasswordBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key == Key.Enter)
+        if (e.Key == System.Windows.Input.Key.Enter)
         {
             await _viewModel.AttemptLoginAsync(PasswordBox.Password);
         }
@@ -36,6 +35,7 @@ public partial class LoginView : Window
     private void OnLoginSucceeded()
     {
         var mainWindow = App.AppHost.Services.GetRequiredService<MainWindow>();
+        System.Windows.Application.Current.MainWindow = mainWindow; // keep WPF's tracking accurate
         mainWindow.Show();
         Close();
     }

@@ -36,7 +36,13 @@ public partial class PosView : UserControl
     private async void OnSaleCompleted(int saleId)
     {
         var window = App.AppHost.Services.GetRequiredService<ReceiptPreviewWindow>();
-        window.Owner = System.Windows.Application.Current.MainWindow;
+        var owner = App.AppHost.Services.GetRequiredService<MainWindow>();
+
+        if (!ReferenceEquals(window, owner) && owner.IsVisible)
+        {
+            window.Owner = owner;
+        }
+
         await window.LoadAsync(saleId);
         window.Show();
 

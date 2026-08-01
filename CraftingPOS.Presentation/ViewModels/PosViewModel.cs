@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CraftingPOS.Application.Common;
@@ -31,14 +30,14 @@ public partial class PosViewModel : ObservableObject
 {
     private readonly ISaleService _saleService;
     private readonly IProductService _productService;
+    private readonly IProductVariantService _productVariantService;
     private readonly ICustomerService _customerService;
     private readonly Application.Common.CurrentUserContext _currentUserContext;
-
-    public event Action<int>? SaleCompleted; // <-- Add it here in PosViewModel
 
     public ObservableCollection<CartLine> Cart { get; } = new();
     public ObservableCollection<ProductDto> SearchResults { get; } = new();
     public ObservableCollection<CustomerDto> Customers { get; } = new();
+    public ObservableCollection<ProductVariantDto> VariantPickerOptions { get; } = new();
     public List<PaymentMethod> PaymentMethods { get; } = Enum.GetValues<PaymentMethod>().ToList();
 
     [ObservableProperty] private string barcodeInput = string.Empty;
@@ -57,6 +56,12 @@ public partial class PosViewModel : ObservableObject
     [ObservableProperty] private string lastReceiptSummary = string.Empty;
     [ObservableProperty] private bool hasCompletedSale;
 
+    // Variant picker state — shown when a Variable product is clicked in search results.
+    [ObservableProperty] private bool isPickingVariant;
+    [ObservableProperty] private string variantPickerHeader = string.Empty;
+
+    public event Action<int>? SaleCompleted;
+
     public bool IsOwner => _currentUserContext.Session?.RoleName == CraftingPOS.Domain.Enums.RoleNames.Owner;
     public bool IsCashPayment => SelectedPaymentMethod == PaymentMethod.Cash;
     public bool RequiresReference => SelectedPaymentMethod is PaymentMethod.Card or PaymentMethod.BankTransfer;
@@ -69,11 +74,13 @@ public partial class PosViewModel : ObservableObject
     public PosViewModel(
         ISaleService saleService,
         IProductService productService,
+        IProductVariantService productVariantService,
         ICustomerService customerService,
         Application.Common.CurrentUserContext currentUserContext)
     {
         _saleService = saleService;
         _productService = productService;
+        _productVariantService = productVariantService;
         _customerService = customerService;
         _currentUserContext = currentUserContext;
     }
@@ -129,13 +136,36 @@ public partial class PosViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AddSearchResultToCart(ProductDto? product)
+    private async Task AddSearchResultToCartAsync(ProductDto? product)
     {
         if (product == null) return;
 
         if (product.ProductType == CraftingPOS.Domain.Enums.ProductType.Variable)
         {
-            SetStatus($"'{product.Name}' has variants — please scan its barcode, or add the specific variant from the Products screen search.", true);
+            // Open the variant picker instead of blocking the cashier with an error.
+            IsBusy = true;
+            try
+            {
+                var variants = await _productVariantService.GetByProductIdAsync(product.Id);
+
+                VariantPickerOptions.Clear();
+                foreach (var v in variants) VariantPickerOptions.Add(v);
+
+                if (VariantPickerOptions.Count == 0)
+                {
+                    SetStatus($"'{product.Name}' has no variants configured yet. Add variants from the Products screen first.", true);
+                    return;
+                }
+
+                VariantPickerHeader = $"Select a variant — {product.Name}";
+                IsPickingVariant = true;
+                ClearStatus();
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+
             return;
         }
 
@@ -150,6 +180,33 @@ public partial class PosViewModel : ObservableObject
         });
 
         ClearStatus();
+    }
+
+    [RelayCommand]
+    private void SelectVariantForCart(ProductVariantDto? variant)
+    {
+        if (variant == null) return;
+
+        AddToCart(new CartItemLookupDto
+        {
+            ProductId = variant.ProductId,
+            ProductVariantId = variant.Id,
+            DisplayName = $"{variant.ProductName} — {variant.VariantName}",
+            UnitPrice = variant.SellingPrice,
+            UnitCost = variant.CostPrice,
+            AvailableStock = variant.CurrentStock
+        });
+
+        IsPickingVariant = false;
+        VariantPickerOptions.Clear();
+        ClearStatus();
+    }
+
+    [RelayCommand]
+    private void CancelVariantPicker()
+    {
+        IsPickingVariant = false;
+        VariantPickerOptions.Clear();
     }
 
     private void AddToCart(CartItemLookupDto lookup)
@@ -310,7 +367,9 @@ public partial class PosViewModel : ObservableObject
 
             HasCompletedSale = true;
             SetStatus("Sale completed successfully.", false);
+
             SaleCompleted?.Invoke(sale.SaleId);
+
             ResetCartForNextSale();
         }
         finally
@@ -323,6 +382,8 @@ public partial class PosViewModel : ObservableObject
     {
         Cart.Clear();
         SearchResults.Clear();
+        VariantPickerOptions.Clear();
+        IsPickingVariant = false;
         SelectedCustomer = null;
         CartDiscountAmount = 0;
         AmountReceived = 0;
