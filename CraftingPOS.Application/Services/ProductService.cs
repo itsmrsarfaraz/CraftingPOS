@@ -14,6 +14,7 @@ public class ProductService : IProductService
     private readonly IProductDiscountRepository _productDiscountRepository;
     private readonly IImageStorageService _imageStorageService;
     private readonly CurrentUserContext _currentUserContext;
+    private readonly IAuditLogService _auditLogService;
 
     public ProductService(
         IProductRepository productRepository,
@@ -25,6 +26,7 @@ public class ProductService : IProductService
         _productDiscountRepository = productDiscountRepository;
         _imageStorageService = imageStorageService;
         _currentUserContext = currentUserContext;
+        _auditLogService = auditLogService;
     }
 
     public async Task<List<ProductDto>> GetAllAsync()
@@ -102,6 +104,7 @@ public class ProductService : IProductService
             await _productRepository.SaveChangesAsync();
 
             Log.Information("Product '{Name}' created by '{User}'.", product.Name, currentUsername);
+            await _auditLogService.LogAsync(AuditModules.Products, "Create", $"Product '{product.Name}' created (Barcode: {product.Barcode}).");
             return OperationResult<int>.Ok(product.Id);
         }
         else
@@ -149,6 +152,7 @@ public class ProductService : IProductService
         await _productRepository.SaveChangesAsync();
 
         Log.Information("Product '{Name}' (Id: {Id}) deactivated by '{User}'.", product.Name, id, _currentUserContext.Session?.Username);
+        await _auditLogService.LogAsync(AuditModules.Products, "Deactivate", $"Product '{product.Name}' (Id: {product.Id}) deactivated by '{_currentUserContext.Session?.Username}'.");
         return OperationResult.Ok();
     }
 

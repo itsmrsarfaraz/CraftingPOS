@@ -14,15 +14,18 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly CurrentUserContext _currentUserContext;
+    private readonly IAuditLogService _auditLogService;
 
     public AuthService(
-        IUserRepository userRepository,
-        IPasswordHasher passwordHasher,
-        CurrentUserContext currentUserContext)
+    IUserRepository userRepository,
+    IPasswordHasher passwordHasher,
+    CurrentUserContext currentUserContext,
+    IAuditLogService auditLogService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _currentUserContext = currentUserContext;
+        _auditLogService = auditLogService;
     }
 
     public async Task<LoginResultDto> LoginAsync(string username, string password)
@@ -69,7 +72,8 @@ public class AuthService : IAuthService
             await _userRepository.SaveChangesAsync();
 
             Log.Warning("Login failed: incorrect password for '{Username}'. Attempt {Attempts}/{Max}.",
-                username, user.FailedLoginAttempts, MaxFailedAttempts);
+            await _auditLogService.LogAsync(AuditModules.Auth, "LoginFailed", $"Failed login attempt for '{username}'.");
+            username, user.FailedLoginAttempts, MaxFailedAttempts);
 
             return LoginResultDto.Fail("Invalid username or password.");
         }
@@ -93,6 +97,7 @@ public class AuthService : IAuthService
 
         _currentUserContext.SetSession(session);
 
+        await _auditLogService.LogAsync(AuditModules.Auth, "Login", $"User '{user.Username}' logged in.");
         Log.Information("User '{Username}' logged in successfully with role '{Role}'.", user.Username, user.Role.Name);
 
         return LoginResultDto.Ok(session);
@@ -122,6 +127,10 @@ public class AuthService : IAuthService
             Log.Information("User '{Username}' logged out.", _currentUserContext.Session.Username);
         }
 
+        if (_currentUserContext.Session != null)
+        {
+            _ = _auditLogService.LogAsync(AuditModules.Auth, "Logout", $"User '{_currentUserContext.Session.Username}' logged out.");
+        }
         _currentUserContext.Clear();
     }
 }
