@@ -33,6 +33,7 @@ public partial class MainWindow : Window
     private void BackupButton_Click(object sender, RoutedEventArgs e) => ShowBackup();
     private void AuditLogsButton_Click(object sender, RoutedEventArgs e) => ShowAuditLogs();
     private void UsersButton_Click(object sender, RoutedEventArgs e) => ShowUsers();
+    private void LicenseButton_Click(object sender, RoutedEventArgs e) => ShowLicense();
 
     private void ShowDashboard() => MainContent.Content = App.AppHost.Services.GetRequiredService<DashboardView>();
     private void ShowSales() => MainContent.Content = App.AppHost.Services.GetRequiredService<PosView>();
@@ -47,4 +48,5 @@ public partial class MainWindow : Window
     private void ShowBackup() => MainContent.Content = App.AppHost.Services.GetRequiredService<BackupView>();
     private void ShowAuditLogs() => MainContent.Content = App.AppHost.Services.GetRequiredService<AuditLogsView>();
     private void ShowUsers() => MainContent.Content = App.AppHost.Services.GetRequiredService<UsersView>();
+    private void ShowLicense() => MainContent.Content = App.AppHost.Services.GetRequiredService<LicenseView>();
 }

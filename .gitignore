@@ -6,3 +6,4 @@ obj/
 *.db-shm
 *.db-wal
 Logs/
+CraftingPOS.LicenseGenerator/*.xml

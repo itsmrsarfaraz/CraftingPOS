@@ -34,8 +34,21 @@ public partial class LoginView : Window
 
     private void OnLoginSucceeded()
     {
+        // Anti-piracy Layer 5: re-validate at login, not just at startup.
+        if (!App.LicenseManagerInstance.QuickCheckIsValid())
+        {
+            var reason = App.LicenseManagerInstance.LastResult?.ErrorMessage ?? "License is no longer valid.";
+            MessageBox.Show(
+                $"CraftingPOS cannot continue: {reason}\n\nPlease contact support to renew your license.",
+                "License Invalid",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            System.Windows.Application.Current.Shutdown();
+            return;
+        }
+
         var mainWindow = App.AppHost.Services.GetRequiredService<MainWindow>();
-        System.Windows.Application.Current.MainWindow = mainWindow; // keep WPF's tracking accurate
+        System.Windows.Application.Current.MainWindow = mainWindow;
         mainWindow.Show();
         Close();
     }

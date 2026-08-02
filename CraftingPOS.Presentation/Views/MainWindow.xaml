@@ -57,7 +57,8 @@
 				<Button x:Name="SuppliersButton" Content="Suppliers" Style="{StaticResource SidebarButtonStyle}" Click="SuppliersButton_Click"/>
 				<Button x:Name="ReportsButton" Content="Reports" Style="{StaticResource SidebarButtonStyle}" Click="ReportsButton_Click"/>
 				<Button x:Name="BackupButton" Content="Backup" Style="{StaticResource SidebarButtonStyle}" Click="BackupButton_Click"/>
-				<Button x:Name="AuditLogsButton" Content="Audit Logs" Style="{StaticResource SidebarButtonStyle}" Click="AuditLogsButton_Click"/>
+                <Button x:Name="LicenseButton" Content="License" Style="{StaticResource SidebarButtonStyle}" Click="LicenseButton_Click"/>
+                <Button x:Name="AuditLogsButton" Content="Audit Logs" Style="{StaticResource SidebarButtonStyle}" Click="AuditLogsButton_Click"/>
 				<Button x:Name="UsersButton" Content="Users" Style="{StaticResource SidebarButtonStyle}" Click="UsersButton_Click"/>
 				<Button x:Name="SettingsButton" Content="Settings" Style="{StaticResource SidebarButtonStyle}" IsEnabled="False"/>
 			</StackPanel>

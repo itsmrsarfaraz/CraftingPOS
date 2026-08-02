@@ -5,8 +5,10 @@ using CraftingPOS.Application;
 using CraftingPOS.Application.Interfaces;
 using CraftingPOS.Infrastructure;
 using CraftingPOS.Infrastructure.Logging;
+using CraftingPOS.Licensing;
 using CraftingPOS.Persistence;
 using CraftingPOS.Persistence.Seed;
+using CraftingPOS.Presentation.ViewModels;
 using CraftingPOS.Presentation.Views;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,24 +21,59 @@ namespace CraftingPOS.Presentation;
 public partial class App : System.Windows.Application
 {
     public static IHost AppHost { get; private set; } = null!;
+    public static LicenseManager LicenseManagerInstance { get; private set; } = null!;
 
-    protected override async void OnStartup(StartupEventArgs e)
+    private string _dataDirectory = string.Empty;
+
+    protected override void OnStartup(StartupEventArgs e)
     {
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnAppDomainUnhandledException;
 
-        var dataDirectory = Path.Combine(
+        _dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "CraftingPOS");
-        var logDirectory = Path.Combine(dataDirectory, "Logs");
+        var logDirectory = Path.Combine(_dataDirectory, "Logs");
 
-        Directory.CreateDirectory(dataDirectory);
+        Directory.CreateDirectory(_dataDirectory);
         Directory.CreateDirectory(logDirectory);
 
         LoggingSetup.ConfigureSerilog(logDirectory);
         Log.Information("CraftingPOS starting up...");
 
-        var dbPath = Path.Combine(dataDirectory, "CraftingPOS.db");
+        LicenseManagerInstance = new LicenseManager(_dataDirectory);
+        var licenseResult = LicenseManagerInstance.Validate();
+
+        if (!licenseResult.IsValid)
+        {
+            // FR-LIC-004: refuse execution until a valid license is activated.
+            Log.Warning("License invalid at startup: {Reason}", licenseResult.ErrorMessage);
+            ShowActivationWindow();
+            return;
+        }
+
+        _ = ContinueStartupAsync();
+
+        base.OnStartup(e);
+    }
+
+    private void ShowActivationWindow()
+    {
+        var viewModel = new ActivationViewModel(LicenseManagerInstance);
+        var window = new ActivationWindow(viewModel);
+
+        viewModel.ActivationSucceeded += async () =>
+        {
+            window.Close();
+            await ContinueStartupAsync();
+        };
+
+        window.Show();
+    }
+
+    private async Task ContinueStartupAsync()
+    {
+        var dbPath = Path.Combine(_dataDirectory, "CraftingPOS.db");
 
         AppHost = Host.CreateDefaultBuilder()
             .UseSerilog()
@@ -50,6 +87,7 @@ public partial class App : System.Windows.Application
             })
             .ConfigureServices((context, services) =>
             {
+                services.AddSingleton(LicenseManagerInstance);
                 services.AddPersistence(context.Configuration);
                 services.AddApplicationServices();
                 services.AddInfrastructureServices();
@@ -72,8 +110,6 @@ public partial class App : System.Windows.Application
 
         var loginView = AppHost.Services.GetRequiredService<LoginView>();
         loginView.Show();
-
-        base.OnStartup(e);
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -99,7 +135,12 @@ public partial class App : System.Windows.Application
     {
         Log.Information("CraftingPOS shutting down...");
         Log.CloseAndFlush();
-        await AppHost.StopAsync();
+
+        if (AppHost != null)
+        {
+            await AppHost.StopAsync();
+        }
+
         base.OnExit(e);
     }
 }

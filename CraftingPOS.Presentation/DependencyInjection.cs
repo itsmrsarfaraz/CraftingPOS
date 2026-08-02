@@ -61,6 +61,8 @@ public static class DependencyInjection
         services.AddTransient<AuditLogsViewModel>();
         services.AddTransient<AuditLogsView>();
 
+        services.AddTransient<LicenseViewModel>();
+        services.AddTransient<LicenseView>();
 
         return services;
     }

@@ -34,6 +34,7 @@ public partial class PosViewModel : ObservableObject
     private readonly IProductVariantService _productVariantService;
     private readonly ICustomerService _customerService;
     private readonly IAuthService _authService;
+    private readonly CraftingPOS.Licensing.LicenseManager _licenseManager;
     private readonly CurrentUserContext _currentUserContext;
 
     public ObservableCollection<CartLine> Cart { get; } = new();
@@ -92,6 +93,7 @@ public partial class PosViewModel : ObservableObject
         IProductVariantService productVariantService,
         ICustomerService customerService,
         IAuthService authService,
+        CraftingPOS.Licensing.LicenseManager licenseManager,
         CurrentUserContext currentUserContext)
     {
         _saleService = saleService;
@@ -99,6 +101,7 @@ public partial class PosViewModel : ObservableObject
         _productVariantService = productVariantService;
         _customerService = customerService;
         _authService = authService;
+        _licenseManager = licenseManager;
         _currentUserContext = currentUserContext;
     }
 
@@ -336,6 +339,14 @@ public partial class PosViewModel : ObservableObject
     [RelayCommand]
     private async Task CompleteSaleAsync()
     {
+        // Anti-piracy Layer 5: re-validate at sale completion, not just at startup/login.
+        if (!_licenseManager.QuickCheckIsValid())
+        {
+            var reason = _licenseManager.LastResult?.ErrorMessage ?? "License is no longer valid.";
+            SetStatus($"Cannot complete sale: {reason}. Contact support to renew your license.", true);
+            return;
+        }
+
         ClearStatus();
         HasCompletedSale = false;
 
