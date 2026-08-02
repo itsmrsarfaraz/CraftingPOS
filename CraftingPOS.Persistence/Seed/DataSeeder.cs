@@ -30,28 +30,41 @@ public static class DataSeeder
 
     private static async Task SeedDefaultAccountsAsync(AppDbContext context, Func<string, string> hashPassword)
     {
-        if (await context.Users.AnyAsync()) return;
+        // Check each seeded account independently instead of bailing out
+        // as soon as ANY user exists — otherwise upgrading an existing
+        // install (which already had 'admin') silently skips 'sysadmin'.
+        var existingUsernames = await context.Users
+            .IgnoreQueryFilters() // include soft-deleted, just in case
+            .Select(u => u.Username)
+            .ToListAsync();
 
-        var systemAdminRole = await context.Roles.FirstAsync(r => r.Name == RoleNames.SystemAdmin);
-        var ownerRole = await context.Roles.FirstAsync(r => r.Name == RoleNames.Owner);
-
-        context.Users.Add(new User
+        if (!existingUsernames.Contains("sysadmin"))
         {
-            RoleId = systemAdminRole.Id,
-            Username = "sysadmin",
-            FullName = "System Administrator",
-            PasswordHash = hashPassword("SysAdmin@123"),
-            IsActive = true
-        });
+            var systemAdminRole = await context.Roles.FirstAsync(r => r.Name == RoleNames.SystemAdmin);
 
-        context.Users.Add(new User
+            context.Users.Add(new User
+            {
+                RoleId = systemAdminRole.Id,
+                Username = "sysadmin",
+                FullName = "System Administrator",
+                PasswordHash = hashPassword("SysAdmin@123"),
+                IsActive = true
+            });
+        }
+
+        if (!existingUsernames.Contains("admin"))
         {
-            RoleId = ownerRole.Id,
-            Username = "admin",
-            FullName = "System Owner",
-            PasswordHash = hashPassword("Admin@123"),
-            IsActive = true
-        });
+            var ownerRole = await context.Roles.FirstAsync(r => r.Name == RoleNames.Owner);
+
+            context.Users.Add(new User
+            {
+                RoleId = ownerRole.Id,
+                Username = "admin",
+                FullName = "System Owner",
+                PasswordHash = hashPassword("Admin@123"),
+                IsActive = true
+            });
+        }
 
         await context.SaveChangesAsync();
     }

@@ -3,6 +3,7 @@ using CraftingPOS.Application.Common;
 using CraftingPOS.Application.DTOs;
 using CraftingPOS.Application.Interfaces;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace CraftingPOS.Persistence.Services;
