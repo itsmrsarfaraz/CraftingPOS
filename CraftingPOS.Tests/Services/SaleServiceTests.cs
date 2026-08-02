@@ -59,7 +59,7 @@ public class SaleServiceTests : IDisposable
         return new SaleService(
             saleRepository, productRepository, variantRepository,
             discountRepository, discountSettingsRepository, transactionRepository,
-            customerLedgerService, currentUserContext, new FakeAuditLogService());
+            customerLedgerService, currentUserContext);
     }
 
     [Fact]
