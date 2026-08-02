@@ -1,0 +1,39 @@
+using CraftingPOS.Domain.Interfaces;
+using CraftingPOS.Persistence.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using CraftingPOS.Application.Interfaces;
+
+namespace CraftingPOS.Persistence;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? "Data Source=CraftingPOS.db";
+
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlite(connectionString));
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IBrandRepository, BrandRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IProductVariantRepository, ProductVariantRepository>();
+        services.AddScoped<ISupplierRepository, SupplierRepository>();
+        services.AddScoped<IPurchaseRepository, PurchaseRepository>();
+        services.AddScoped<IInventoryTransactionRepository, InventoryTransactionRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<ICustomerLedgerRepository, CustomerLedgerRepository>();
+        services.AddScoped<ISaleRepository, SaleRepository>();
+        services.AddScoped<IBackupService, Services.BackupService>();
+        services.AddScoped<IProductDiscountRepository, ProductDiscountRepository>();
+        services.AddScoped<IDiscountSettingsRepository, DiscountSettingsRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+
+        return services;
+    }
+}

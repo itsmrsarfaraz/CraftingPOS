@@ -1,0 +1,59 @@
+<Window x:Class="CraftingPOS.Presentation.Views.ActivationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CraftingPOS - Activation Required"
+        Height="420" Width="460"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="CraftingPOS Activation" FontSize="22" FontWeight="Bold" Foreground="#1E3A8A"/>
+
+        <TextBlock Grid.Row="2" Text="This machine's ID (send this to support):" FontSize="12" Foreground="Gray"/>
+        <Border Grid.Row="4" Background="#F3F4F6" CornerRadius="6" Padding="10">
+            <Grid>
+                <TextBlock Text="{Binding MachineFingerprint}" FontFamily="Consolas" FontSize="15" FontWeight="Bold"/>
+                <Button Content="Copy" HorizontalAlignment="Right" FontSize="11" Padding="8,2"
+                        Background="#1E3A8A" Foreground="White"
+                        Command="{Binding CopyFingerprintCommand}"/>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="6" Text="Once you receive your license.dat file, import it below:" FontSize="12" Foreground="Gray"/>
+        <Button Grid.Row="8" Content="Import License File..." Height="38" FontWeight="Bold"
+                Background="#16A34A" Foreground="White"
+                Command="{Binding ImportLicenseCommand}"/>
+
+        <TextBlock Grid.Row="10" Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="12">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="#16A34A"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasError}" Value="True">
+                            <Setter Property="Foreground" Value="#DC2626"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <Button Grid.Row="12" Content="Exit" Height="30" Width="100" HorizontalAlignment="Right"
+                Background="#E5E7EB"
+                Command="{Binding ExitCommand}"/>
+    </Grid>
+</Window>

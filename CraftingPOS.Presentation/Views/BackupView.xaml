@@ -1,0 +1,95 @@
+<UserControl x:Class="CraftingPOS.Presentation.Views.BackupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style x:Key="PanelStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="18"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#F3F4F6">
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="Backup &amp; Restore" FontSize="24" FontWeight="Bold" Foreground="#1E3A8A"/>
+
+            <Border Grid.Row="2" Style="{StaticResource PanelStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Last Backup" FontSize="12" Foreground="Gray"/>
+                        <TextBlock FontSize="15" FontWeight="Bold">
+                            <TextBlock.Text>
+                                <Binding Path="LatestBackup.CreatedAt" StringFormat="dd MMM yyyy, HH:mm" FallbackValue="No backups yet"/>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="Create Backup" Height="36" Padding="16,0" Margin="0,0,10,0"
+                                Background="#1E3A8A" Foreground="White" FontWeight="Bold"
+                                Command="{Binding CreateBackupCommand}"/>
+                        <Button Content="Restore Backup" Height="36" Padding="16,0"
+                                Background="#DC2626" Foreground="White" FontWeight="Bold"
+                                Command="{Binding RestoreBackupCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" FontSize="12" TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="#16A34A"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasError}" Value="True">
+                                <Setter Property="Foreground" Value="#DC2626"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <Border Grid.Row="4" Style="{StaticResource PanelStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Backup History" FontWeight="Bold" FontSize="15" Margin="0,0,0,10"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Backups}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                              RowHeight="32" CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="File" Binding="{Binding FileName}" Width="*"/>
+                            <DataGridTextColumn Header="Created" Binding="{Binding CreatedAt, StringFormat='dd MMM yyyy HH:mm'}" Width="Auto"/>
+                            <DataGridTextColumn Header="Size (KB)" Binding="{Binding SizeBytes, StringFormat='{}{0:N0}'}" Width="Auto"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Background="#AAFFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="Working..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+        </Border>
+    </Grid>
+</UserControl>

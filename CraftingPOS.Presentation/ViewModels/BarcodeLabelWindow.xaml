@@ -1,0 +1,31 @@
+<Window x:Class="CraftingPOS.Presentation.Views.BarcodeLabelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Barcode Label" Height="320" Width="360"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Printable label content -->
+        <StackPanel x:Name="LabelPanel" Grid.Row="0" Grid.RowSpan="3"
+                    HorizontalAlignment="Center" Background="White">
+            <TextBlock x:Name="ProductNameText" FontWeight="Bold" FontSize="14"
+                       HorizontalAlignment="Center" Margin="0,0,0,4"/>
+            <Image x:Name="BarcodeImage" Width="280" Height="90" Stretch="Uniform"/>
+            <TextBlock x:Name="BarcodeValueText" FontFamily="Consolas" FontSize="12"
+                       HorizontalAlignment="Center" Margin="0,2,0,4"/>
+            <TextBlock x:Name="PriceText" FontWeight="Bold" FontSize="16"
+                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
+        </StackPanel>
+
+        <Button Grid.Row="4" Content="Print Label" Height="34" FontWeight="Bold"
+                Background="#1E3A8A" Foreground="White"
+                Click="PrintButton_Click"/>
+    </Grid>
+</Window>

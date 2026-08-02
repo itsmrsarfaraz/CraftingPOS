@@ -1,0 +1,208 @@
+<UserControl x:Class="CraftingPOS.Presentation.Views.PurchasesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style x:Key="PanelStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="18"/>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="Gray"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+        <Style x:Key="FieldBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#F3F4F6">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+            <StackPanel>
+                <TextBlock Text="Purchases — Receive Inventory" FontSize="24" FontWeight="Bold" Foreground="#1E3A8A" Margin="0,0,0,16"/>
+
+                <!-- Header -->
+                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="New Purchase" FontWeight="Bold" FontSize="15" Margin="0,0,0,12"/>
+                        <UniformGrid Columns="3" Rows="1">
+                            <StackPanel Margin="0,0,10,0">
+                                <TextBlock Text="Supplier *" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox ItemsSource="{Binding Suppliers}" SelectedItem="{Binding FormSupplier}"
+                                          DisplayMemberPath="Name" Padding="6"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,10,0">
+                                <TextBlock Text="Invoice Number *" Style="{StaticResource FieldLabel}"/>
+                                <TextBox Text="{Binding FormInvoiceNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Purchase Date" Style="{StaticResource FieldLabel}"/>
+                                <DatePicker SelectedDate="{Binding FormPurchaseDate}" Padding="6"/>
+                            </StackPanel>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Add item -->
+                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Add Item" FontWeight="Bold" FontSize="15" Margin="0,0,0,12"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Product" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProductToAdd}"
+                                          DisplayMemberPath="Name" Padding="6"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Visibility="{Binding SelectedProductIsVariable, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Variant" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox ItemsSource="{Binding AvailableVariants}" SelectedItem="{Binding SelectedVariantToAdd}"
+                                          DisplayMemberPath="VariantName" Padding="6"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="Quantity" Style="{StaticResource FieldLabel}"/>
+                                <TextBox Text="{Binding NewItemQuantity, UpdateSourceTrigger=PropertyChanged}" Padding="6"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="6">
+                                <TextBlock Text="Unit Cost" Style="{StaticResource FieldLabel}"/>
+                                <TextBox Text="{Binding NewItemUnitCost, UpdateSourceTrigger=PropertyChanged}" Padding="6"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="8" Content="+ Add Item" VerticalAlignment="Bottom" Height="30"
+                                    Background="#16A34A" Foreground="White" FontWeight="Bold"
+                                    Command="{Binding AddItemCommand}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Items grid -->
+                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Purchase Items" FontWeight="Bold" FontSize="15" Margin="0,0,0,12"/>
+
+                        <DataGrid ItemsSource="{Binding Items}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  RowHeight="32"
+                                  CanUserAddRows="False"
+                                  MaxHeight="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Product" Binding="{Binding DisplayName}" Width="*"/>
+                                <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity}" Width="Auto"/>
+                                <DataGridTextColumn Header="Unit Cost" Binding="{Binding UnitCost, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
+                                <DataGridTextColumn Header="Line Total" Binding="{Binding LineTotal, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
+                                <DataGridTemplateColumn Header="" Width="80">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="Remove" FontSize="10" Padding="4,1"
+                                                    Background="#FEE2E2" Foreground="#B91C1C" BorderThickness="0"
+                                                    Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Totals -->
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="260"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="1">
+                                <Grid Margin="0,0,0,6">
+                                    <TextBlock Text="Subtotal" HorizontalAlignment="Left"/>
+                                    <TextBlock Text="{Binding SubTotal, StringFormat='Rs. {0:N0}'}" HorizontalAlignment="Right" FontWeight="Bold"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,6">
+                                    <TextBlock Text="Discount" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                    <TextBox Text="{Binding FormDiscountAmount, UpdateSourceTrigger=PropertyChanged}"
+                                             HorizontalAlignment="Right" Width="120" Padding="4"/>
+                                </Grid>
+                                <Separator Margin="0,4"/>
+                                <Grid>
+                                    <TextBlock Text="Grand Total" HorizontalAlignment="Left" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="{Binding GrandTotal, StringFormat='Rs. {0:N0}'}" HorizontalAlignment="Right" FontWeight="Bold" FontSize="16" Foreground="#1E3A8A"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Notes" Style="{StaticResource FieldLabel}" Margin="0,16,0,4"/>
+                        <TextBox Text="{Binding FormNotes, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" Height="50" Padding="6" Margin="0,0,0,12"/>
+
+                        <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,10">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#16A34A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasError}" Value="True">
+                                            <Setter Property="Foreground" Value="#DC2626"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <Button Content="Save Purchase &amp; Update Inventory" Height="38" FontWeight="Bold"
+                                Background="#1E3A8A" Foreground="White"
+                                Command="{Binding SavePurchaseCommand}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- History -->
+                <Border Style="{StaticResource PanelStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Recent Purchases" FontWeight="Bold" FontSize="15" Margin="0,0,0,12"/>
+                        <DataGrid ItemsSource="{Binding Purchases}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  RowHeight="32"
+                                  CanUserAddRows="False"
+                                  MaxHeight="240">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Invoice #" Binding="{Binding InvoiceNumber}" Width="Auto"/>
+                                <DataGridTextColumn Header="Supplier" Binding="{Binding SupplierName}" Width="*"/>
+                                <DataGridTextColumn Header="Date" Binding="{Binding PurchaseDate, StringFormat='dd MMM yyyy'}" Width="Auto"/>
+                                <DataGridTextColumn Header="Total" Binding="{Binding TotalAmount, StringFormat='Rs. {0:N0}'}" Width="Auto"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Background="#AAFFFFFF"
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="Working..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+        </Border>
+    </Grid>
+</UserControl>

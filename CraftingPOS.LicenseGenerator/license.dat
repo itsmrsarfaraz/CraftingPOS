@@ -1,0 +1,10 @@
+{
+  "Data": {
+    "BusinessName": "My Test Shop",
+    "MachineFingerprint": "CPOS-40DA-B6B7-1B98-5605",
+    "LicenseType": 0,
+    "IssuedAt": "2026-08-02T06:50:13.2773789Z",
+    "ExpiresAt": null
+  },
+  "SignatureBase64": "dN2AnpTg2ushev2lL4xbgRNp0uOoGqQK\u002BZTHn1W4nv/gqJ2dbpjHcvoymxNh6kdhXpuhMpsy54fhF\u002ByEwXheMTJQ/SQNU3w380ZR6Vo7NqlcLRIfiU\u002BTOzxJgK6/tgmggF5\u002BMaWqNMnB3vPAQxjQZhCsvInwaoSR4dhHVBl1cr71Ik100t\u002BKD4QWnaEZ5urSHvd8MdjEOzKAKzTWm6Sjrt48M7\u002B1lccrml4rojpMwfshMJSm4uuK7m\u002Bj5VUhmynLvfgQrQtXBep33yDPHw639HrtLPHob\u002BeAxZIUyvuwhTFLcZWv6lt1hkz0XFPQSSFF/aqqQfEz6z0jKrKyLi/M9Q=="
+}

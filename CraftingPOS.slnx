@@ -1,0 +1,10 @@
+<Solution>
+  <Project Path="CraftingPOS.Application/CraftingPOS.Application.csproj" />
+  <Project Path="CraftingPOS.Domain/CraftingPOS.Domain.csproj" />
+  <Project Path="CraftingPOS.Infrastructure/CraftingPOS.Infrastructure.csproj" />
+  <Project Path="CraftingPOS.LicenseGenerator/CraftingPOS.LicenseGenerator.csproj" />
+  <Project Path="CraftingPOS.Licensing/CraftingPOS.Licensing.csproj" />
+  <Project Path="CraftingPOS.Persistence/CraftingPOS.Persistence.csproj" />
+  <Project Path="CraftingPOS.Presentation/CraftingPOS.Presentation.csproj" />
+  <Project Path="CraftingPOS.Tests/CraftingPOS.Tests.csproj" />
+</Solution>

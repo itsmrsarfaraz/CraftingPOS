@@ -1,0 +1,224 @@
+<UserControl x:Class="CraftingPOS.Presentation.Views.InventoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style x:Key="PanelStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="18"/>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="Gray"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+        <Style x:Key="FieldBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#F3F4F6">
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="12"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="12"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="1*" MinWidth="340"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                       Text="Inventory Monitoring" FontSize="24" FontWeight="Bold" Foreground="#1E3A8A"/>
+
+            <!-- Filter buttons -->
+            <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
+                <RadioButton Content="All Products" GroupName="Filter" Margin="0,0,16,0"
+                             IsChecked="{Binding SelectedFilter, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=All}"/>
+                <RadioButton Content="Low Stock" GroupName="Filter" Margin="0,0,16,0"
+                             IsChecked="{Binding SelectedFilter, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=LowStock}"/>
+                <RadioButton Content="Out Of Stock" GroupName="Filter"
+                             IsChecked="{Binding SelectedFilter, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=OutOfStock}"/>
+            </StackPanel>
+
+            <!-- Left: Inventory Grid -->
+            <Border Grid.Row="4" Grid.Column="0" Style="{StaticResource PanelStyle}">
+                <DataGrid ItemsSource="{Binding Items}"
+                          SelectedItem="{Binding SelectedItem}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          RowHeight="34"
+                          CanUserAddRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="" Width="16">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Ellipse Width="10" Height="10" HorizontalAlignment="Center">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="#16A34A"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="Low">
+                                                        <Setter Property="Fill" Value="#F59E0B"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Status}" Value="OutOfStock">
+                                                        <Setter Property="Fill" Value="#DC2626"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Product" Binding="{Binding DisplayName}" Width="*"/>
+                        <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="Auto"/>
+                        <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="Auto"/>
+                        <DataGridTextColumn Header="Stock" Binding="{Binding CurrentStock}" Width="Auto"/>
+                        <DataGridTextColumn Header="Min" Binding="{Binding MinimumStock}" Width="Auto"/>
+                        <DataGridTemplateColumn Header="" Width="190">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="History"
+                                                FontSize="11" Padding="6,2" Margin="0,0,6,0"
+                                                Background="#DBEAFE" Foreground="#1E3A8A" BorderThickness="0"
+                                                Command="{Binding DataContext.ViewHistoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+                                        <Button Content="Adjust Stock"
+                                                FontSize="11" Padding="6,2"
+                                                Background="#FEF3C7" Foreground="#92400E" BorderThickness="0"
+                                                Command="{Binding DataContext.OpenAdjustmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Right: History or Adjustment panel -->
+            <Border Grid.Row="2" Grid.RowSpan="3" Grid.Column="2" Style="{StaticResource PanelStyle}" VerticalAlignment="Top">
+                <Grid>
+                    <!-- Idle state -->
+                    <TextBlock Text="Select 'History' or 'Adjust Stock' on a product to see details here."
+                               Foreground="Gray" FontStyle="Italic" TextWrapping="Wrap"
+                               VerticalAlignment="Top">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsViewingHistory}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsViewingAdjustment}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- History Panel -->
+                    <StackPanel Visibility="{Binding IsViewingHistory, Converter={StaticResource BoolToVis}}">
+                        <Grid Margin="0,0,0,14">
+                            <TextBlock Text="{Binding DetailHeader}" FontWeight="Bold" FontSize="15" TextWrapping="Wrap"/>
+                            <Button Content="✕ Close" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    FontSize="11" Padding="6,2" Background="Transparent" BorderThickness="0"
+                                    Command="{Binding CloseDetailCommand}"/>
+                        </Grid>
+
+                        <TextBlock Text="No transactions yet."
+                                   Foreground="Gray" FontStyle="Italic"
+                                   Visibility="{Binding HasHistoryEntries, Converter={StaticResource InverseBoolToVis}}"/>
+
+                        <DataGrid ItemsSource="{Binding HistoryEntries}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  RowHeight="30"
+                                  MaxHeight="500"
+                                  CanUserAddRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date" Binding="{Binding TransactionDate, StringFormat='dd MMM yy HH:mm'}" Width="Auto"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding TransactionType}" Width="Auto"/>
+                                <DataGridTextColumn Header="Qty" Binding="{Binding Quantity}" Width="Auto"/>
+                                <DataGridTextColumn Header="Before" Binding="{Binding StockBefore}" Width="Auto"/>
+                                <DataGridTextColumn Header="After" Binding="{Binding StockAfter}" Width="Auto"/>
+                                <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+
+                    <!-- Adjustment Panel -->
+                    <StackPanel Visibility="{Binding IsViewingAdjustment, Converter={StaticResource BoolToVis}}">
+                        <Grid Margin="0,0,0,14">
+                            <TextBlock Text="{Binding DetailHeader}" FontWeight="Bold" FontSize="15" TextWrapping="Wrap"/>
+                            <Button Content="✕ Close" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    FontSize="11" Padding="6,2" Background="Transparent" BorderThickness="0"
+                                    Command="{Binding CloseDetailCommand}"/>
+                        </Grid>
+
+                        <TextBlock Text="Type" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox ItemsSource="{Binding AdjustmentTypes}" SelectedItem="{Binding AdjustmentType}"
+                                  Padding="6" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="Direction" Style="{StaticResource FieldLabel}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <RadioButton Content="Increase Stock" GroupName="Direction" Margin="0,0,16,0"
+                                         IsChecked="{Binding AdjustmentIsIncrease}"/>
+                            <RadioButton Content="Decrease Stock" GroupName="Direction"
+                                         IsChecked="{Binding AdjustmentIsIncrease, Converter={StaticResource InverseBoolConverter}}"/>
+                        </StackPanel>
+
+                        <TextBlock Text="Quantity *" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding AdjustmentQuantity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"/>
+
+                        <TextBlock Text="Notes (reason for adjustment)" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding AdjustmentNotes, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" Height="60" Style="{StaticResource FieldBox}"/>
+
+                        <TextBlock Text="{Binding AdjustmentStatusMessage}" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,10">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#16A34A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AdjustmentHasError}" Value="True">
+                                            <Setter Property="Foreground" Value="#DC2626"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <Button Content="Apply Adjustment" Height="34" FontWeight="Bold"
+                                Background="#1E3A8A" Foreground="White"
+                                Command="{Binding SaveAdjustmentCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Background="#AAFFFFFF"
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="Working..." HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+        </Border>
+    </Grid>
+</UserControl>
