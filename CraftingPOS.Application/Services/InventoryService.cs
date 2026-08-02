@@ -8,26 +8,26 @@ using Serilog;
 
 namespace CraftingPOS.Application.Services;
 
-// NOTE: Implemented against IProductRepository / IProductVariantRepository /
-// IInventoryTransactionRepository — no new tables needed, this sprint only
-// adds read/adjustment logic on top of Sprint 4 & 6 infrastructure.
 public class InventoryService : IInventoryService
 {
     private readonly IProductRepository _productRepository;
     private readonly IProductVariantRepository _variantRepository;
     private readonly IInventoryTransactionRepository _transactionRepository;
     private readonly CurrentUserContext _currentUserContext;
+    private readonly IAuditLogService _auditLogService;
 
     public InventoryService(
         IProductRepository productRepository,
         IProductVariantRepository variantRepository,
         IInventoryTransactionRepository transactionRepository,
-        CurrentUserContext currentUserContext)
+        CurrentUserContext currentUserContext,
+        IAuditLogService auditLogService)
     {
         _productRepository = productRepository;
         _variantRepository = variantRepository;
         _transactionRepository = transactionRepository;
         _currentUserContext = currentUserContext;
+        _auditLogService = auditLogService;
     }
 
     public async Task<List<InventoryItemDto>> GetAllAsync()
@@ -43,7 +43,6 @@ public class InventoryService : IInventoryService
             }
             else
             {
-                // Variable products track stock per-variant, not on the parent (Sprint 4).
                 foreach (var variant in product.Variants.Where(v => v.IsActive))
                 {
                     items.Add(MapVariantToDto(product, variant));
@@ -65,7 +64,7 @@ public class InventoryService : IInventoryService
         var lowStock = await GetLowStockAsync();
 
         return lowStock
-            .OrderBy(i => i.CurrentStock) // Most urgent (or already at 0) first
+            .OrderBy(i => i.CurrentStock)
             .Take(maxItems)
             .Select(i => new LowStockItemDto
             {
@@ -113,7 +112,6 @@ public class InventoryService : IInventoryService
             var stockBefore = variant.CurrentStock;
             var stockAfter = stockBefore + signedQuantity;
 
-            // BR-INV-001: Stock cannot become negative.
             if (stockAfter < 0)
             {
                 return OperationResult.Fail(
@@ -152,6 +150,11 @@ public class InventoryService : IInventoryService
 
         Log.Information("Manual stock {Type} of {Quantity} ({Direction}) recorded by '{User}' for ProductId {ProductId}, VariantId {VariantId}.",
             dto.TransactionType, dto.Quantity, dto.IsIncrease ? "increase" : "decrease", currentUsername, dto.ProductId, dto.ProductVariantId);
+
+        await _auditLogService.LogAsync(AuditModules.Inventory, dto.TransactionType.ToString(),
+            $"{(dto.IsIncrease ? "Increased" : "Decreased")} stock by {dto.Quantity} for ProductId {dto.ProductId}" +
+            (dto.ProductVariantId.HasValue ? $" (VariantId {dto.ProductVariantId})" : "") +
+            (string.IsNullOrWhiteSpace(dto.Notes) ? "." : $" — {dto.Notes}"));
 
         return OperationResult.Ok();
     }

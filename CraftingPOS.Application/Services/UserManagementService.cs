@@ -21,10 +21,10 @@ public class UserManagementService : IUserManagementService
         IPasswordHasher passwordHasher,
         CurrentUserContext currentUserContext)
     {
-        _userRepository = userRepository;
-        _roleRepository = roleRepository;
-        _passwordHasher = passwordHasher;
-        _currentUserContext = currentUserContext;
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _roleRepository = roleRepository ?? throw new ArgumentNullException(nameof(roleRepository));
+        _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
+        _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
     }
 
     public List<string> GetAssignableRoles()
@@ -42,14 +42,23 @@ public class UserManagementService : IUserManagementService
     public async Task<List<UserAccountDto>> GetAllAsync()
     {
         var users = await _userRepository.GetAllAsync();
-        return users.OrderBy(u => u.Role.Name).ThenBy(u => u.Username).Select(MapToDto).ToList();
+        return users
+            .OrderBy(u => u.Role?.Name ?? string.Empty)
+            .ThenBy(u => u.Username)
+            .Select(MapToDto)
+            .ToList();
     }
 
     public async Task<OperationResult> CreateAsync(CreateUserAccountDto dto)
     {
+        if (dto == null)
+        {
+            return OperationResult.Fail("User payload cannot be null.");
+        }
+
         var assignableRoles = GetAssignableRoles();
 
-        if (!assignableRoles.Contains(dto.RoleName))
+        if (string.IsNullOrWhiteSpace(dto.RoleName) || !assignableRoles.Contains(dto.RoleName))
         {
             return OperationResult.Fail("You are not authorized to create an account with that role.");
         }
@@ -64,10 +73,11 @@ public class UserManagementService : IUserManagementService
             return OperationResult.Fail("Password must be at least 6 characters.");
         }
 
-        var existing = await _userRepository.GetByUsernameAsync(dto.Username.Trim());
+        var trimmedUsername = dto.Username.Trim();
+        var existing = await _userRepository.GetByUsernameAsync(trimmedUsername);
         if (existing != null)
         {
-            return OperationResult.Fail($"Username '{dto.Username}' is already taken.");
+            return OperationResult.Fail($"Username '{trimmedUsername}' is already taken.");
         }
 
         var role = await _roleRepository.GetByNameAsync(dto.RoleName);
@@ -81,8 +91,8 @@ public class UserManagementService : IUserManagementService
         var user = new User
         {
             RoleId = role.Id,
-            Username = dto.Username.Trim(),
-            FullName = dto.FullName.Trim(),
+            Username = trimmedUsername,
+            FullName = dto.FullName?.Trim() ?? string.Empty,
             PasswordHash = _passwordHasher.Hash(dto.Password),
             IsActive = true,
             CreatedBy = currentUsername
@@ -98,7 +108,12 @@ public class UserManagementService : IUserManagementService
 
     public async Task<OperationResult> ResetPasswordAsync(ResetPasswordDto dto)
     {
-        if (dto.NewPassword.Length < 6)
+        if (dto == null)
+        {
+            return OperationResult.Fail("Reset payload cannot be null.");
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 6)
         {
             return OperationResult.Fail("Password must be at least 6 characters.");
         }
@@ -117,7 +132,7 @@ public class UserManagementService : IUserManagementService
         await _userRepository.UpdateAsync(user);
         await _userRepository.SaveChangesAsync();
 
-        Log.Information("Password reset for user '{Username}' by '{Admin}'.", user.Username, _currentUserContext.Session?.Username);
+        Log.Information("Password reset for user '{Username}' by '{Admin}'.", user.Username, _currentUserContext.Session?.Username ?? "system");
 
         return OperationResult.Ok();
     }
@@ -141,7 +156,7 @@ public class UserManagementService : IUserManagementService
         await _userRepository.UpdateAsync(user);
         await _userRepository.SaveChangesAsync();
 
-        Log.Information("User '{Username}' deactivated by '{Admin}'.", user.Username, _currentUserContext.Session?.Username);
+        Log.Information("User '{Username}' deactivated by '{Admin}'.", user.Username, _currentUserContext.Session?.Username ?? "system");
 
         return OperationResult.Ok();
     }
@@ -153,7 +168,7 @@ public class UserManagementService : IUserManagementService
             Id = u.Id,
             Username = u.Username,
             FullName = u.FullName,
-            RoleName = u.Role.Name,
+            RoleName = u.Role?.Name ?? string.Empty,
             IsActive = u.IsActive,
             LastLoginAt = u.LastLoginAt
         };

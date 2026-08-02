@@ -11,11 +11,16 @@ public class ProductDiscountService : IProductDiscountService
 {
     private readonly IProductDiscountRepository _discountRepository;
     private readonly CurrentUserContext _currentUserContext;
+    private readonly IAuditLogService _auditLogService;
 
-    public ProductDiscountService(IProductDiscountRepository discountRepository, CurrentUserContext currentUserContext)
+    public ProductDiscountService(
+        IProductDiscountRepository discountRepository,
+        CurrentUserContext currentUserContext,
+        IAuditLogService auditLogService)
     {
         _discountRepository = discountRepository;
         _currentUserContext = currentUserContext;
+        _auditLogService = auditLogService;
     }
 
     public async Task<ProductDiscountDto> GetForProductAsync(int productId)
@@ -32,7 +37,6 @@ public class ProductDiscountService : IProductDiscountService
 
     public async Task<OperationResult> SetDiscountAsync(SaveProductDiscountDto dto)
     {
-        // FR-DISC-001: only Owner (or SystemAdmin) configures product discounts.
         var role = _currentUserContext.Session?.RoleName;
         if (role != CraftingPOS.Domain.Enums.RoleNames.Owner && role != CraftingPOS.Domain.Enums.RoleNames.SystemAdmin)
         {
@@ -79,6 +83,9 @@ public class ProductDiscountService : IProductDiscountService
         Log.Information("Product discount set for ProductId {ProductId}: {Type} {Value} by '{User}'.",
             dto.ProductId, dto.DiscountType, dto.DiscountValue, currentUsername);
 
+        await _auditLogService.LogAsync(AuditModules.Discounts, "SetDiscount",
+            $"Discount set on ProductId {dto.ProductId}: {dto.DiscountType} {dto.DiscountValue}.");
+
         return OperationResult.Ok();
     }
 
@@ -91,13 +98,15 @@ public class ProductDiscountService : IProductDiscountService
         }
 
         var existing = await _discountRepository.GetByProductIdAsync(productId);
-        if (existing == null) return OperationResult.Ok(); // nothing to remove
+        if (existing == null) return OperationResult.Ok();
 
         existing.IsActive = false;
         existing.UpdatedBy = _currentUserContext.Session?.Username ?? "system";
 
         await _discountRepository.UpdateAsync(existing);
         await _discountRepository.SaveChangesAsync();
+
+        await _auditLogService.LogAsync(AuditModules.Discounts, "RemoveDiscount", $"Discount removed from ProductId {productId}.");
 
         return OperationResult.Ok();
     }

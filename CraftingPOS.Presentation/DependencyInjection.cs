@@ -58,6 +58,9 @@ public static class DependencyInjection
         services.AddTransient<UsersViewModel>();
         services.AddTransient<UsersView>();
 
+        services.AddTransient<AuditLogsViewModel>();
+        services.AddTransient<AuditLogsView>();
+
 
         return services;
     }

@@ -15,6 +15,7 @@ public partial class MainWindow : Window
 
         var isOwnerOrAdmin = currentUserContext.Session?.RoleName is RoleNames.Owner or RoleNames.SystemAdmin;
         UsersButton.Visibility = isOwnerOrAdmin ? Visibility.Visible : Visibility.Collapsed;
+        AuditLogsButton.Visibility = isOwnerOrAdmin ? Visibility.Visible : Visibility.Collapsed;
 
         Loaded += (_, _) => ShowDashboard();
     }
@@ -30,6 +31,7 @@ public partial class MainWindow : Window
     private void CustomersButton_Click(object sender, RoutedEventArgs e) => ShowCustomers();
     private void ReportsButton_Click(object sender, RoutedEventArgs e) => ShowReports();
     private void BackupButton_Click(object sender, RoutedEventArgs e) => ShowBackup();
+    private void AuditLogsButton_Click(object sender, RoutedEventArgs e) => ShowAuditLogs();
     private void UsersButton_Click(object sender, RoutedEventArgs e) => ShowUsers();
 
     private void ShowDashboard() => MainContent.Content = App.AppHost.Services.GetRequiredService<DashboardView>();
@@ -43,5 +45,6 @@ public partial class MainWindow : Window
     private void ShowCustomers() => MainContent.Content = App.AppHost.Services.GetRequiredService<CustomersView>();
     private void ShowReports() => MainContent.Content = App.AppHost.Services.GetRequiredService<ReportsView>();
     private void ShowBackup() => MainContent.Content = App.AppHost.Services.GetRequiredService<BackupView>();
+    private void ShowAuditLogs() => MainContent.Content = App.AppHost.Services.GetRequiredService<AuditLogsView>();
     private void ShowUsers() => MainContent.Content = App.AppHost.Services.GetRequiredService<UsersView>();
 }

@@ -18,14 +18,13 @@ public class BackupService : IBackupService
 
     public BackupService(AppDbContext context)
     {
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
 
         _dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CraftingPOS");
         _dbPath = Path.Combine(_dataDirectory, "CraftingPOS.db");
         _logsDirectory = Path.Combine(_dataDirectory, "Logs");
 
-        // FR-BACKUP default location per SRS Part 10 §8.
         _backupDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "CraftingPOS", "Backups");
         Directory.CreateDirectory(_backupDirectory);
@@ -33,19 +32,20 @@ public class BackupService : IBackupService
 
     public async Task<OperationResult<BackupInfoDto>> CreateBackupAsync()
     {
+        var tempDir = Path.Combine(Path.GetTempPath(), $"cpos_backup_{Guid.NewGuid():N}");
+
         try
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), $"cpos_backup_{Guid.NewGuid():N}");
             Directory.CreateDirectory(tempDir);
-
             var snapshotDbPath = Path.Combine(tempDir, "CraftingPOS.db");
 
-            // VACUUM INTO creates a consistent snapshot even while the live DB is open (WAL-safe).
-            await using (var conn = new SqliteConnection(_context.Database.GetConnectionString()))
+            var connectionString = _context.Database.GetConnectionString();
+            await using (var conn = new SqliteConnection(connectionString))
             {
                 await conn.OpenAsync();
-                using var cmd = conn.CreateCommand();
-                cmd.CommandText = $"VACUUM INTO '{snapshotDbPath.Replace("'", "''")}'";
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = "VACUUM INTO @snapshotPath;";
+                cmd.Parameters.AddWithValue("@snapshotPath", snapshotDbPath);
                 await cmd.ExecuteNonQueryAsync();
             }
 
@@ -59,8 +59,6 @@ public class BackupService : IBackupService
             var zipPath = Path.Combine(_backupDirectory, fileName);
 
             ZipFile.CreateFromDirectory(tempDir, zipPath, CompressionLevel.Optimal, includeBaseDirectory: false);
-
-            Directory.Delete(tempDir, recursive: true);
 
             var info = new BackupInfoDto
             {
@@ -78,6 +76,20 @@ public class BackupService : IBackupService
         {
             Log.Error(ex, "Backup creation failed.");
             return OperationResult<BackupInfoDto>.Fail($"Backup failed: {ex.Message}");
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                try
+                {
+                    Directory.Delete(tempDir, recursive: true);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to cleanup temporary backup directory '{TempDir}'.", tempDir);
+                }
+            }
         }
     }
 
@@ -103,7 +115,7 @@ public class BackupService : IBackupService
 
     public async Task<OperationResult> ValidateBackupAsync(string backupZipPath)
     {
-        if (!File.Exists(backupZipPath))
+        if (string.IsNullOrWhiteSpace(backupZipPath) || !File.Exists(backupZipPath))
             return OperationResult.Fail("Backup file not found.");
 
         var tempDir = Path.Combine(Path.GetTempPath(), $"cpos_validate_{Guid.NewGuid():N}");
@@ -118,7 +130,7 @@ public class BackupService : IBackupService
 
             await using var conn = new SqliteConnection($"Data Source={extractedDbPath}");
             await conn.OpenAsync();
-            using var cmd = conn.CreateCommand();
+            await using var cmd = conn.CreateCommand();
             cmd.CommandText = "PRAGMA integrity_check;";
             var result = (string?)await cmd.ExecuteScalarAsync();
 
@@ -134,7 +146,16 @@ public class BackupService : IBackupService
         finally
         {
             if (Directory.Exists(tempDir))
-                Directory.Delete(tempDir, recursive: true);
+            {
+                try
+                {
+                    Directory.Delete(tempDir, recursive: true);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to cleanup temporary validation directory '{TempDir}'.", tempDir);
+                }
+            }
         }
     }
 
@@ -144,20 +165,17 @@ public class BackupService : IBackupService
         if (!validation.Success)
             return validation;
 
+        var tempDir = Path.Combine(Path.GetTempPath(), $"cpos_restore_{Guid.NewGuid():N}");
+
         try
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), $"cpos_restore_{Guid.NewGuid():N}");
             ZipFile.ExtractToDirectory(backupZipPath, tempDir);
-
             var extractedDbPath = Path.Combine(tempDir, "CraftingPOS.db");
 
-            // Release all pooled SQLite connections so the live file can be overwritten.
             await _context.Database.CloseConnectionAsync();
             SqliteConnection.ClearAllPools();
 
             File.Copy(extractedDbPath, _dbPath, overwrite: true);
-
-            Directory.Delete(tempDir, recursive: true);
 
             Log.Information("Database restored from backup: {BackupPath}", backupZipPath);
 
@@ -168,12 +186,28 @@ public class BackupService : IBackupService
             Log.Error(ex, "Restore failed.");
             return OperationResult.Fail($"Restore failed: {ex.Message}");
         }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                try
+                {
+                    Directory.Delete(tempDir, recursive: true);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to cleanup temporary restore directory '{TempDir}'.", tempDir);
+                }
+            }
+        }
     }
 
     private static void CopyDirectory(string source, string destination)
     {
         Directory.CreateDirectory(destination);
         foreach (var file in Directory.GetFiles(source))
+        {
             File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), overwrite: true);
+        }
     }
 }

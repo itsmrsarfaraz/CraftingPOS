@@ -29,14 +29,14 @@ public class SaleService : ISaleService
         ICustomerLedgerService customerLedgerService,
         CurrentUserContext currentUserContext)
     {
-        _saleRepository = saleRepository;
-        _productRepository = productRepository;
-        _variantRepository = variantRepository;
-        _productDiscountRepository = productDiscountRepository;
-        _discountSettingsRepository = discountSettingsRepository;
-        _inventoryTransactionRepository = inventoryTransactionRepository;
-        _customerLedgerService = customerLedgerService;
-        _currentUserContext = currentUserContext;
+        _saleRepository = saleRepository ?? throw new ArgumentNullException(nameof(saleRepository));
+        _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+        _variantRepository = variantRepository ?? throw new ArgumentNullException(nameof(variantRepository));
+        _productDiscountRepository = productDiscountRepository ?? throw new ArgumentNullException(nameof(productDiscountRepository));
+        _discountSettingsRepository = discountSettingsRepository ?? throw new ArgumentNullException(nameof(discountSettingsRepository));
+        _inventoryTransactionRepository = inventoryTransactionRepository ?? throw new ArgumentNullException(nameof(inventoryTransactionRepository));
+        _customerLedgerService = customerLedgerService ?? throw new ArgumentNullException(nameof(customerLedgerService));
+        _currentUserContext = currentUserContext ?? throw new ArgumentNullException(nameof(currentUserContext));
     }
 
     private bool IsOwnerOrAdmin =>
@@ -46,18 +46,21 @@ public class SaleService : ISaleService
     {
         if (string.IsNullOrWhiteSpace(barcode)) return null;
 
-        var product = await _productRepository.GetByBarcodeAsync(barcode.Trim());
+        var cleanBarcode = barcode.Trim();
+
+        var product = await _productRepository.GetByBarcodeAsync(cleanBarcode);
         if (product != null)
         {
             var discount = await _productDiscountRepository.GetByProductIdAsync(product.Id);
             return BuildLookup(product.Id, null, product.Name, product.SellingPrice, product.CostPrice, product.CurrentStock, discount);
         }
 
-        var variant = await _variantRepository.GetByBarcodeAsync(barcode.Trim());
+        var variant = await _variantRepository.GetByBarcodeAsync(cleanBarcode);
         if (variant != null)
         {
             var discount = await _productDiscountRepository.GetByProductIdAsync(variant.ProductId);
-            return BuildLookup(variant.ProductId, variant.Id, $"{variant.Product?.Name} — {variant.VariantName}",
+            var productName = variant.Product?.Name ?? "Item";
+            return BuildLookup(variant.ProductId, variant.Id, $"{productName} — {variant.VariantName}",
                 variant.SellingPrice, variant.CostPrice, variant.CurrentStock, discount);
         }
 
@@ -89,7 +92,7 @@ public class SaleService : ISaleService
 
     public async Task<OperationResult<CompletedSaleResultDto>> CompleteSaleAsync(CompleteSaleDto dto)
     {
-        if (dto.Items == null || dto.Items.Count == 0)
+        if (dto == null || dto.Items == null || dto.Items.Count == 0)
             return OperationResult<CompletedSaleResultDto>.Fail("Cannot complete a sale with an empty cart.");
 
         foreach (var item in dto.Items)
@@ -103,7 +106,6 @@ public class SaleService : ISaleService
 
         var subTotal = dto.Items.Sum(i => i.Quantity * i.UnitPrice);
 
-        // Price-floor enforcement (per unit, after any product discount already baked into UnitPrice by the ViewModel).
         var itemsBelowCost = dto.Items.Where(i => i.UnitPrice < i.UnitCost).ToList();
         if (itemsBelowCost.Count > 0)
         {
@@ -120,12 +122,10 @@ public class SaleService : ISaleService
             }
         }
 
-        // Compute cart discount amount from type+value.
         var cartDiscountAmount = dto.CartDiscountType == DiscountType.Percentage
             ? subTotal * dto.CartDiscountValue / 100m
             : dto.CartDiscountValue;
 
-        // FR-DISC-006/007/008: cashier discount ceiling (percent AND flat), configurable.
         if (!IsOwnerOrAdmin && !dto.DiscountOverrideAuthorized)
         {
             var settings = await _discountSettingsRepository.GetOrCreateAsync();
@@ -225,23 +225,29 @@ public class SaleService : ISaleService
         {
             if (item.ProductVariantId.HasValue)
             {
-                var variant = await _variantRepository.GetByIdAsync(item.ProductVariantId.Value)!;
-                var stockBefore = variant!.CurrentStock;
-                variant.CurrentStock -= item.Quantity;
-                await _variantRepository.UpdateAsync(variant);
+                var variant = await _variantRepository.GetByIdAsync(item.ProductVariantId.Value);
+                if (variant != null)
+                {
+                    var stockBefore = variant.CurrentStock;
+                    variant.CurrentStock -= item.Quantity;
+                    await _variantRepository.UpdateAsync(variant);
 
-                await LogInventoryTransactionAsync(item.ProductId, variant.Id, InventoryTransactionType.Sale,
-                    -item.Quantity, stockBefore, variant.CurrentStock, sale.Id, $"Sale Invoice: {sale.InvoiceNumber}", currentUsername);
+                    await LogInventoryTransactionAsync(item.ProductId, variant.Id, InventoryTransactionType.Sale,
+                        -item.Quantity, stockBefore, variant.CurrentStock, sale.Id, $"Sale Invoice: {sale.InvoiceNumber}", currentUsername);
+                }
             }
             else
             {
-                var product = await _productRepository.GetByIdAsync(item.ProductId)!;
-                var stockBefore = product!.CurrentStock;
-                product.CurrentStock -= item.Quantity;
-                await _productRepository.UpdateAsync(product);
+                var product = await _productRepository.GetByIdAsync(item.ProductId);
+                if (product != null)
+                {
+                    var stockBefore = product.CurrentStock;
+                    product.CurrentStock -= item.Quantity;
+                    await _productRepository.UpdateAsync(product);
 
-                await LogInventoryTransactionAsync(product.Id, null, InventoryTransactionType.Sale,
-                    -item.Quantity, stockBefore, product.CurrentStock, sale.Id, $"Sale Invoice: {sale.InvoiceNumber}", currentUsername);
+                    await LogInventoryTransactionAsync(product.Id, null, InventoryTransactionType.Sale,
+                        -item.Quantity, stockBefore, product.CurrentStock, sale.Id, $"Sale Invoice: {sale.InvoiceNumber}", currentUsername);
+                }
             }
         }
 
@@ -317,7 +323,9 @@ public class SaleService : ISaleService
             CustomerName = sale.Customer?.Name,
             Items = sale.Items.Select(i => new ReceiptLineDto
             {
-                ProductName = i.ProductVariant != null ? $"{i.Product?.Name} — {i.ProductVariant.VariantName}" : i.Product?.Name ?? string.Empty,
+                ProductName = i.ProductVariant != null
+                    ? $"{i.Product?.Name} — {i.ProductVariant.VariantName}"
+                    : i.Product?.Name ?? string.Empty,
                 Quantity = i.Quantity,
                 UnitPrice = i.UnitPrice,
                 LineTotal = i.LineTotal

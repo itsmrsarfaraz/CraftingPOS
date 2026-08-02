@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IBackupService, Services.BackupService>();
         services.AddScoped<IProductDiscountRepository, ProductDiscountRepository>();
         services.AddScoped<IDiscountSettingsRepository, DiscountSettingsRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
         return services;
     }

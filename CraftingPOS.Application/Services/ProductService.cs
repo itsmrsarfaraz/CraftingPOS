@@ -20,7 +20,8 @@ public class ProductService : IProductService
         IProductRepository productRepository,
         IProductDiscountRepository productDiscountRepository,
         IImageStorageService imageStorageService,
-        CurrentUserContext currentUserContext)
+        CurrentUserContext currentUserContext,
+        IAuditLogService auditLogService)
     {
         _productRepository = productRepository;
         _productDiscountRepository = productDiscountRepository;
@@ -112,6 +113,8 @@ public class ProductService : IProductService
             var product = await _productRepository.GetByIdAsync(dto.Id);
             if (product == null) return OperationResult<int>.Fail("Product not found.");
 
+            var priceChanged = product.CostPrice != dto.CostPrice || product.SellingPrice != dto.SellingPrice;
+
             product.CategoryId = dto.CategoryId;
             product.BrandId = dto.BrandId;
             product.Barcode = dto.Barcode.Trim();
@@ -136,6 +139,12 @@ public class ProductService : IProductService
             await _productRepository.SaveChangesAsync();
 
             Log.Information("Product '{Name}' (Id: {Id}) updated by '{User}'.", product.Name, product.Id, currentUsername);
+
+            await _auditLogService.LogAsync(AuditModules.Products, priceChanged ? "PriceChange" : "Update",
+                priceChanged
+                    ? $"Product '{product.Name}' price changed. Cost: {product.CostPrice:N0}→{dto.CostPrice:N0}, Selling: {product.SellingPrice:N0}→{dto.SellingPrice:N0}."
+                    : $"Product '{product.Name}' updated.");
+
             return OperationResult<int>.Ok(product.Id);
         }
     }
@@ -152,7 +161,7 @@ public class ProductService : IProductService
         await _productRepository.SaveChangesAsync();
 
         Log.Information("Product '{Name}' (Id: {Id}) deactivated by '{User}'.", product.Name, id, _currentUserContext.Session?.Username);
-        await _auditLogService.LogAsync(AuditModules.Products, "Deactivate", $"Product '{product.Name}' (Id: {product.Id}) deactivated by '{_currentUserContext.Session?.Username}'.");
+        await _auditLogService.LogAsync(AuditModules.Products, "Deactivate", $"Product '{product.Name}' deactivated.");
         return OperationResult.Ok();
     }
 
